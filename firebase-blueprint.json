@@ -1,0 +1,139 @@
+{
+  "entities": {
+    "earning": {
+      "title": "Earning",
+      "description": "A single daily earning record",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The user UID owner"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date YYYY-MM-DD"
+        },
+        "grossAmount": {
+          "type": "number",
+          "description": "Gross amount in currency"
+        },
+        "deductions": {
+          "type": "number",
+          "description": "Deductions, taxes, or transaction fees"
+        },
+        "netAmount": {
+          "type": "number",
+          "description": "Net amount (Gross minus Deductions)"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Earning source or category"
+        },
+        "clientName": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Client or payer name"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Payment method used"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["Received", "Pending", "Partially Paid"],
+          "description": "Payment status"
+        },
+        "referenceId": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Reference or invoice number"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Detailed notes or remarks"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": [
+        "userId",
+        "date",
+        "grossAmount",
+        "deductions",
+        "netAmount",
+        "category",
+        "paymentStatus"
+      ]
+    },
+    "userProfile": {
+      "title": "UserProfile",
+      "description": "User profile settings and preference",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User Google email"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "User photo URL"
+        },
+        "currency": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Preferred currency symbol (USD, EUR, INR, etc.)"
+        },
+        "monthlyGoal": {
+          "type": "number",
+          "description": "Target monthly net earnings goal"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last update"
+        }
+      },
+      "required": [
+        "userId",
+        "email"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User document storing basic preferences"
+    },
+    "/users/{userId}/earnings/{earningId}": {
+      "schema": "earning",
+      "description": "Earnings subcollection scoped strictly to the specific user UID"
+    }
+  }
+}

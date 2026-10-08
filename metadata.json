@@ -1,0 +1,6 @@
+{
+  "name": "Daily Earnings Tracker & Financial Reports",
+  "description": "Comprehensive daily earnings tracker and financial reporting dashboard with Google authentication and real-time secure cloud synchronization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
