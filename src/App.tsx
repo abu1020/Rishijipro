@@ -479,7 +479,7 @@ export default function App() {
         {/* Quiet Editorial Footer */}
         <footer className="border-t border-slate-900 bg-slate-950 py-5 text-xs text-slate-500">
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span>ProfitTrack Daily · Built for Freelancers, Creators & Businesses</span>
+            <span>rishi Jha · Professional GST and TDS Accountant</span>
             <div className="flex items-center gap-3">
               <span>Google OAuth Verified</span>
               <span className="text-slate-700">·</span>

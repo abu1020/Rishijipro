@@ -85,7 +85,7 @@ export function exportEarningsToCSV(earnings: Earning[], currencyCode: string = 
   const link = document.createElement('a');
   link.setAttribute('href', url);
   const now = new Date().toISOString().slice(0, 10);
-  link.setAttribute('download', `Daily_Earnings_Report_${currencyCode}_${now}.csv`);
+  link.setAttribute('download', `Rishi_Jha_GST_TDS_Report_${currencyCode}_${now}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -101,7 +101,9 @@ export function exportDatabaseBackupJSON(
   currencyCode: string = 'INR'
 ): void {
   const backupPayload = {
-    format: 'ProfitTrackDailyBackup',
+    app: 'rishi Jha',
+    slogan: 'Professional GST and TDS Accountant',
+    format: 'RishiJhaAccountingBackup',
     version: '1.0',
     exportedAt: new Date().toISOString(),
     userEmail,
@@ -130,7 +132,7 @@ export function exportDatabaseBackupJSON(
   link.setAttribute('href', url);
   const now = new Date().toISOString().slice(0, 10);
   const safeEmail = (userEmail || 'account').split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
-  link.setAttribute('download', `ProfitTrack-Backup-${safeEmail}-${now}.json`);
+  link.setAttribute('download', `RishiJha-Backup-${safeEmail}-${now}.json`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

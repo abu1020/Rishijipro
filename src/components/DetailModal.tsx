@@ -173,16 +173,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           <div className="hidden print:block border-b-2 border-black pb-4 mb-4">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-black uppercase tracking-wider">
-                  Payment Receipt & Voucher
+                <h1 className="text-3xl font-extrabold text-black tracking-tight">
+                  rishi Jha
                 </h1>
+                <p className="text-sm font-semibold text-emerald-700 tracking-wide mt-0.5">
+                  Professional GST and TDS Accountant
+                </p>
                 <p className="text-xs text-slate-600 mt-1">
-                  ProfitTrack Daily Financial Record · ID: {earning.id}
+                  Tax Invoice & Payment Bill · Record ID: #{earning.id}
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-black">{earning.paymentStatus.toUpperCase()}</div>
-                <div className="text-xs text-slate-600">{earning.date}</div>
+                <div className="inline-block px-2.5 py-1 text-xs font-bold uppercase tracking-wider border border-black rounded text-black mb-1">
+                  {earning.paymentStatus.toUpperCase()}
+                </div>
+                <div className="text-xs font-semibold text-black">Date: {earning.date}</div>
+                {earning.referenceId && (
+                  <div className="text-xs text-slate-600">Ref: {earning.referenceId}</div>
+                )}
               </div>
             </div>
           </div>
@@ -333,8 +341,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Verified Ledger Record</span>
             </span>
-            <span className="font-mono text-[10px] text-slate-600 print:text-slate-500">
-              ProfitTrack Daily · Verified Record
+            <span className="font-mono text-[10px] text-slate-600 print:text-slate-800 font-semibold">
+              rishi Jha · Professional GST and TDS Accountant
             </span>
           </div>
         </div>
@@ -358,11 +366,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             <button
               onClick={handleDownloadPDF}
               disabled={isGeneratingPDF}
-              className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 hover:border-emerald-500/40 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              title="Download Professional PDF Receipt (jsPDF)"
+              className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+              title="Download Executive PDF Tax Bill (rishi Jha · GST & TDS Practice)"
             >
-              <FileDown className="w-3.5 h-3.5" />
-              <span>{isGeneratingPDF ? 'Generating...' : 'PDF Receipt'}</span>
+              <FileDown className="w-4 h-4 stroke-[2.5]" />
+              <span>{isGeneratingPDF ? 'Creating Bill...' : 'Download PDF Bill'}</span>
             </button>
 
             <button

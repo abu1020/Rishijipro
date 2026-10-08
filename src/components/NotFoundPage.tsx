@@ -61,7 +61,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onGoHome }) => {
         <div className="pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>ProfitTrack Daily Protected</span>
+            <span>rishi Jha · Professional GST and TDS Accountant</span>
           </span>
           <span className="font-mono text-[10px]">404_NOT_FOUND</span>
         </div>

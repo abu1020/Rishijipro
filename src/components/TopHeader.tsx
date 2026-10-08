@@ -86,7 +86,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </button>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="font-semibold text-slate-400 hidden sm:inline">ProfitTrack</span>
+          <span className="font-semibold text-slate-400 hidden sm:inline">rishi Jha</span>
           <span className="text-slate-600 hidden sm:inline">/</span>
           <h1 className="font-bold text-white tracking-tight truncate text-sm">
             {getBreadcrumbTitle()}

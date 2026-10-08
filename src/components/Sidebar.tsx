@@ -104,11 +104,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <TrendingUp className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
-                <span className="text-base font-bold text-white tracking-tight">
-                  ProfitTrack
+                <span className="text-base font-extrabold text-white tracking-tight block">
+                  rishi Jha
                 </span>
-                <span className="text-[10px] text-emerald-400 font-mono font-medium block -mt-0.5">
-                  Daily Ledger
+                <span className="text-[10px] text-emerald-400 font-medium block -mt-0.5 leading-tight">
+                  Professional GST and TDS Accountant
                 </span>
               </div>
             </div>

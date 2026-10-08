@@ -50,9 +50,9 @@ export const LoginScreen: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-              ProfitTrack <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">Daily</span>
+              rishi Jha
             </h1>
-            <p className="text-xs text-slate-400">Financial Reports & Daily Earnings Tracker</p>
+            <p className="text-xs text-emerald-400 font-medium">Professional GST and TDS Accountant</p>
           </div>
         </div>
 
@@ -252,7 +252,7 @@ export const LoginScreen: React.FC = () => {
 
       {/* Footer */}
       <footer className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <p>© 2026 ProfitTrack Daily • Real-Time Daily Financial Ledger</p>
+        <p>© 2026 rishi Jha • Professional GST and TDS Accountant</p>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
