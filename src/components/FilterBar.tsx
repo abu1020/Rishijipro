@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { FilterState, DatePreset, PaymentStatus } from '../types';
-import { getPresetDateRange, getTodayISO } from '../utils/dateUtils';
+import { FilterState, DatePreset } from '../types';
+import { getPresetDateRange } from '../utils/dateUtils';
 import {
   Search,
   RotateCcw,
   Calendar,
-  Filter,
   X,
   CreditCard,
   Tag,
   ChevronDown,
 } from 'lucide-react';
+import { hapticSelect, hapticTap, hapticPress } from '../utils/haptics';
 
 interface FilterBarProps {
   filters: FilterState;
-  onFilterChange: (newFilters: FilterState) => void;
+  onFilterChange: (filters: FilterState) => void;
   categories: string[];
   paymentMethods: string[];
-  totalMatches: number;
+  totalMatches?: number;
 }
 
 const PRESETS: { id: DatePreset; label: string }[] = [
@@ -26,6 +26,7 @@ const PRESETS: { id: DatePreset; label: string }[] = [
   { id: 'this_week', label: 'This Week' },
   { id: 'this_month', label: 'This Month' },
   { id: 'last_month', label: 'Last Month' },
+  { id: 'current_fy', label: 'Current FY' },
   { id: 'this_year', label: 'This Year' },
   { id: 'all_time', label: 'All Time' },
 ];
@@ -37,9 +38,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   paymentMethods,
   totalMatches,
 }) => {
-  const [showCustomDates, setShowCustomDates] = useState(filters.preset === 'custom');
+  const [showCustomDates, setShowCustomDates] = useState(
+    filters.preset === 'custom'
+  );
 
   const handlePresetSelect = (preset: DatePreset) => {
+    hapticSelect();
     setShowCustomDates(false);
     const range = getPresetDateRange(preset);
     onFilterChange({
@@ -50,29 +54,30 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     });
   };
 
-  const handleCustomStartDate = (date: string) => {
+  const handleCustomStartDate = (val: string) => {
     onFilterChange({
       ...filters,
       preset: 'custom',
-      startDate: date,
+      startDate: val,
     });
   };
 
-  const handleCustomEndDate = (date: string) => {
+  const handleCustomEndDate = (val: string) => {
     onFilterChange({
       ...filters,
       preset: 'custom',
-      endDate: date,
+      endDate: val,
     });
   };
 
   const handleResetFilters = () => {
-    const defaultRange = getPresetDateRange('this_month');
+    hapticPress();
     setShowCustomDates(false);
+    const range = getPresetDateRange('this_month');
     onFilterChange({
       preset: 'this_month',
-      startDate: defaultRange.startDate,
-      endDate: defaultRange.endDate,
+      startDate: range.startDate,
+      endDate: range.endDate,
       category: 'all',
       paymentMethod: 'all',
       paymentStatus: 'all',
@@ -88,9 +93,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     filters.searchQuery.trim() !== '';
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3.5">
-      {/* Top Row: Date Presets Carousel (Fluid Horizontal Scroll for Mobile) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="bg-[#0d1630] border border-blue-500/20 rounded-xl p-3.5 sm:p-4 space-y-3 transition-colors text-white shadow-lg shadow-blue-950/30">
+      {/* Top Row: Date Presets Carousel */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none -mx-1 px-1">
           {PRESETS.map((p) => {
             const isActive = filters.preset === p.id && !showCustomDates;
@@ -98,10 +103,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <button
                 key={p.id}
                 onClick={() => handlePresetSelect(p.id)}
-                className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer tactile-btn ${
                   isActive
-                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm shadow-emerald-500/20'
-                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    ? 'bg-white text-slate-950 border border-white font-bold shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-blue-900/40 border border-transparent'
                 }`}
               >
                 {p.label}
@@ -110,15 +115,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           })}
 
           <button
-            onClick={() => setShowCustomDates(!showCustomDates)}
-            className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
+            onClick={() => {
+              hapticTap();
+              setShowCustomDates(!showCustomDates);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer tactile-btn ${
               showCustomDates || filters.preset === 'custom'
-                ? 'bg-cyan-500 text-slate-950 font-bold'
-                : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-white text-slate-950 border border-white font-bold shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-blue-900/40 border border-transparent'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Custom Dates</span>
+            <span>Custom</span>
           </button>
         </div>
 
@@ -126,7 +134,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         {isFiltered && (
           <button
             onClick={handleResetFilters}
-            className="self-start sm:self-auto text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1.5 cursor-pointer py-1"
+            className="self-start sm:self-auto text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 cursor-pointer py-1 px-2 rounded-md hover:bg-rose-500/10 transition-colors tactile-btn"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Filters</span>
@@ -136,129 +144,112 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Expandable Custom Date Range Selector */}
       {showCustomDates && (
-        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 text-xs animate-fadeIn">
+        <div className="p-3 rounded-lg border border-blue-500/20 bg-[#101c3d] text-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 text-xs animate-fadeIn">
           <div className="flex items-center gap-2 flex-1">
-            <span className="text-slate-400 font-medium shrink-0">From:</span>
+            <span className="font-semibold text-slate-300 shrink-0">From:</span>
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => handleCustomStartDate(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#091126] border border-blue-500/25 text-white focus:border-blue-400/60 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-2 flex-1">
-            <span className="text-slate-400 font-medium shrink-0">To:</span>
+            <span className="font-semibold text-slate-300 shrink-0">To:</span>
             <input
               type="date"
               value={filters.endDate}
               onChange={(e) => handleCustomEndDate(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#091126] border border-blue-500/25 text-white focus:border-blue-400/60 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
             />
           </div>
         </div>
       )}
 
-      {/* Middle Row: Multi-Attribute Filters (Search, Category, Payment Method, Status) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-        {/* Instant Search Bar */}
+      {/* Bottom Row: Quick Search & Granular Dropdown Selectors */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+        {/* Keyword Search */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search client, ref #, notes..."
             value={filters.searchQuery}
             onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
-            className="w-full pl-9 pr-8 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none transition-colors"
+            placeholder="Search client, voucher, note..."
+            className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-blue-500/20 bg-[#091126] text-white placeholder-slate-400 focus:border-blue-400/60 text-xs focus:outline-none transition-colors"
           />
           {filters.searchQuery && (
             <button
-              onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+              onClick={() => {
+                hapticTap();
+                onFilterChange({ ...filters, searchQuery: '' });
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* Category Dropdown */}
+        {/* Category Filter */}
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <Tag className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+          <Tag className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <select
             value={filters.category}
-            onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
-            className="w-full pl-9 pr-8 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none appearance-none cursor-pointer"
+            onChange={(e) => {
+              hapticSelect();
+              onFilterChange({ ...filters, category: e.target.value });
+            }}
+            className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-blue-500/20 bg-[#091126] text-white focus:border-blue-400/60 text-xs appearance-none focus:outline-none cursor-pointer transition-colors"
           >
-            <option value="all">All Categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            <option value="all" className="bg-[#091126] text-white">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat} className="bg-[#091126] text-white">
+                {cat}
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-3 h-3 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
 
-        {/* Payment Method Dropdown */}
+        {/* Payment Method Filter */}
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+          <CreditCard className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <select
             value={filters.paymentMethod}
-            onChange={(e) => onFilterChange({ ...filters, paymentMethod: e.target.value })}
-            className="w-full pl-9 pr-8 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none appearance-none cursor-pointer"
+            onChange={(e) => {
+              hapticSelect();
+              onFilterChange({ ...filters, paymentMethod: e.target.value });
+            }}
+            className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-blue-500/20 bg-[#091126] text-white focus:border-blue-400/60 text-xs appearance-none focus:outline-none cursor-pointer transition-colors"
           >
-            <option value="all">All Payment Methods</option>
+            <option value="all" className="bg-[#091126] text-white">All Payment Methods</option>
             {paymentMethods.map((m) => (
-              <option key={m} value={m}>
+              <option key={m} value={m} className="bg-[#091126] text-white">
                 {m}
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-3 h-3 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
 
-        {/* Payment Status Segmented Control */}
-        <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl p-1 min-h-[42px]">
-          <button
-            onClick={() => onFilterChange({ ...filters, paymentStatus: 'all' })}
-            className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              filters.paymentStatus === 'all'
-                ? 'bg-slate-800 text-white font-bold'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+        {/* Payment Status Filter */}
+        <div className="relative">
+          <select
+            value={filters.paymentStatus}
+            onChange={(e) => {
+              hapticSelect();
+              onFilterChange({ ...filters, paymentStatus: e.target.value as any });
+            }}
+            className="w-full px-3 py-1.5 rounded-lg border border-blue-500/20 bg-[#091126] text-white focus:border-blue-400/60 text-xs appearance-none focus:outline-none cursor-pointer transition-colors"
           >
-            All
-          </button>
-          <button
-            onClick={() => onFilterChange({ ...filters, paymentStatus: 'Received' })}
-            className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              filters.paymentStatus === 'Received'
-                ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30'
-                : 'text-slate-400 hover:text-emerald-400'
-            }`}
-          >
-            Received
-          </button>
-          <button
-            onClick={() => onFilterChange({ ...filters, paymentStatus: 'Pending' })}
-            className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              filters.paymentStatus === 'Pending'
-                ? 'bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30'
-                : 'text-slate-400 hover:text-rose-400'
-            }`}
-          >
-            Pending
-          </button>
+            <option value="all" className="bg-[#091126] text-white">All Statuses (Received & Pending)</option>
+            <option value="Received" className="bg-[#091126] text-white">Status: Received</option>
+            <option value="Pending" className="bg-[#091126] text-white">Status: Pending</option>
+            <option value="Partially Paid" className="bg-[#091126] text-white">Status: Partially Paid</option>
+          </select>
+          <ChevronDown className="w-3 h-3 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
-      </div>
-
-      {/* Filter Status Badge */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-        <span>Matching entries: <strong className="text-slate-300 font-mono">{totalMatches}</strong></span>
-        {isFiltered && <span className="text-emerald-400">Filters applied</span>}
       </div>
     </div>
   );

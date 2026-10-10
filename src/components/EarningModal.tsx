@@ -3,6 +3,7 @@ import { Earning, EarningFormData, PaymentStatus, DEFAULT_CATEGORIES, PAYMENT_ME
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { getTodayISO } from '../utils/dateUtils';
+import { hapticTap, hapticPress, hapticSuccess, hapticWarning, hapticSelect } from '../utils/haptics';
 import {
   X,
   Calendar,
@@ -19,6 +20,7 @@ import {
   Check,
   Edit2,
   DollarSign,
+  Calculator,
 } from 'lucide-react';
 
 interface EarningModalProps {
@@ -29,6 +31,7 @@ interface EarningModalProps {
   initialData?: Earning | null;
   mode: 'create' | 'edit' | 'duplicate';
   existingCategories: string[];
+  onOpenCalculator?: () => void;
 }
 
 export const EarningModal: React.FC<EarningModalProps> = ({
@@ -39,6 +42,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
   initialData,
   mode,
   existingCategories,
+  onOpenCalculator,
 }) => {
   const { currency } = useAuth();
 
@@ -126,6 +130,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
 
   // Quick Deduction percentage calculation helpers
   const applyDeductionPercent = (percent: number) => {
+    hapticSelect();
     if (grossNum > 0) {
       const calculated = Math.round(grossNum * (percent / 100) * 100) / 100;
       setDeductionsStr(calculated.toString());
@@ -135,6 +140,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
   };
 
   const handleCategorySelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    hapticSelect();
     const val = e.target.value;
     if (val === 'custom_other') {
       setIsCustomCategory(true);
@@ -151,26 +157,31 @@ export const EarningModal: React.FC<EarningModalProps> = ({
 
     // Validation
     if (!date) {
+      hapticWarning();
       setFormError('Please select a valid date.');
       return;
     }
 
     if (isNaN(grossNum) || grossNum <= 0) {
+      hapticWarning();
       setFormError('Gross Amount must be greater than 0.');
       return;
     }
 
     if (isNaN(deductionsNum) || deductionsNum < 0) {
+      hapticWarning();
       setFormError('Deductions must be 0 or greater.');
       return;
     }
 
     const finalCategory = isCustomCategory ? customCategory.trim() : category;
     if (!finalCategory) {
+      hapticWarning();
       setFormError('Please select or specify an earning category.');
       return;
     }
 
+    hapticPress();
     setIsSubmitting(true);
     try {
       await onSave({
@@ -185,8 +196,10 @@ export const EarningModal: React.FC<EarningModalProps> = ({
         referenceId: referenceId.trim(),
         notes: notes.trim(),
       });
+      hapticSuccess();
       onClose();
     } catch (err: unknown) {
+      hapticWarning();
       const msg = err instanceof Error ? err.message : 'Failed to save transaction entry.';
       setFormError(msg);
     } finally {
@@ -204,24 +217,27 @@ export const EarningModal: React.FC<EarningModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
         title="Click outside to close (Esc)"
       />
 
-      {/* Modal Dialog Card (Universal Desktop & Mobile Responsive) */}
-      <div className="relative bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl shadow-2xl max-w-xl w-full z-10 my-auto max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+      {/* Modal Dialog Card (Liquid Glass Elevated) */}
+      <div className="relative liquid-glass-elevated border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl max-w-xl w-full z-10 my-auto max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+        {/* Specular Highlight Rim */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
         {/* Modal Top Bar */}
-        <div className="shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800 bg-slate-900 flex items-center justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.08] bg-[var(--app-bg)]/40 backdrop-blur-md flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
-              {mode === 'edit' ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Receipt className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl liquid-glass-emerald text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+              {mode === 'edit' ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" /> : <Receipt className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />}
             </div>
             <div className="min-w-0">
               <h3 className="text-base font-bold text-white tracking-tight truncate">
                 {getHeaderTitle()}
               </h3>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-[11px] text-slate-300 truncate">
                 {mode === 'edit'
                   ? `Editing entry ID: ${initialData?.id || ''}`
                   : 'Encrypted & recorded to your personal account ledger'}
@@ -231,7 +247,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-300 text-slate-300 border border-slate-700 transition-colors cursor-pointer shrink-0"
+            className="p-2 rounded-xl liquid-glass-button hover:border-rose-500/40 hover:text-rose-300 text-slate-300 transition-colors cursor-pointer shrink-0"
             title="Close (Esc)"
           >
             <X className="w-4 h-4" />
@@ -240,7 +256,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
 
         {/* Error Alert */}
         {formError && (
-          <div className="shrink-0 mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
+          <div className="shrink-0 mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5 backdrop-blur-md">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
             <div className="leading-relaxed">{formError}</div>
           </div>
@@ -264,7 +280,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                   style={{ colorScheme: 'dark' }}
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs cursor-pointer"
                 />
               </div>
 
@@ -273,7 +289,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Payment Status <span className="text-rose-400">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-1 bg-slate-950 border border-slate-800 p-1 rounded-xl min-h-[42px]">
+                <div className="grid grid-cols-3 gap-1 liquid-glass-subtle p-1 rounded-xl min-h-[42px]">
                   {(['Received', 'Pending', 'Partially Paid'] as PaymentStatus[]).map((st) => {
                     const isSelected = paymentStatus === st;
                     return (
@@ -300,7 +316,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
             </div>
 
             {/* Row 2: Gross & Deductions with Quick Tax Shortcuts */}
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 space-y-3.5">
+            <div className="liquid-glass-subtle rounded-2xl p-4 space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Gross Amount */}
                 <div>
@@ -324,7 +340,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                         if (e.target.value === '0') setGrossAmountStr('');
                       }}
                       onChange={(e) => setGrossAmountStr(e.target.value)}
-                      className="w-full pl-3 pr-12 py-2.5 min-h-[42px] rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm font-mono font-semibold focus:border-emerald-500 focus:outline-none"
+                      className="w-full pl-3 pr-12 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-sm font-mono font-semibold"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
                       {currency}
@@ -355,7 +371,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                         if (!e.target.value) setDeductionsStr('0');
                       }}
                       onChange={(e) => setDeductionsStr(e.target.value)}
-                      className="w-full pl-3 pr-12 py-2.5 min-h-[42px] rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm font-mono font-semibold focus:border-emerald-500 focus:outline-none"
+                      className="w-full pl-3 pr-12 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-sm font-mono font-semibold"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
                       {currency}
@@ -372,41 +388,52 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 <button
                   type="button"
                   onClick={() => applyDeductionPercent(0)}
-                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 cursor-pointer"
+                  className="px-2 py-0.5 rounded-lg liquid-glass-button text-[11px] text-slate-300 cursor-pointer"
                 >
                   0% (None)
                 </button>
                 <button
                   type="button"
                   onClick={() => applyDeductionPercent(5)}
-                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 cursor-pointer"
+                  className="px-2 py-0.5 rounded-lg liquid-glass-button text-[11px] text-slate-300 cursor-pointer"
                 >
                   5% (Fee)
                 </button>
                 <button
                   type="button"
                   onClick={() => applyDeductionPercent(10)}
-                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 cursor-pointer"
+                  className="px-2 py-0.5 rounded-lg liquid-glass-button text-[11px] text-slate-300 cursor-pointer"
                 >
                   10% (TDS)
                 </button>
                 <button
                   type="button"
                   onClick={() => applyDeductionPercent(18)}
-                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 cursor-pointer"
+                  className="px-2 py-0.5 rounded-lg liquid-glass-button text-[11px] text-slate-300 cursor-pointer"
                 >
                   18% (GST)
                 </button>
+                {onOpenCalculator && (
+                  <button
+                    type="button"
+                    onClick={onOpenCalculator}
+                    className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg liquid-glass-button text-[11px] font-semibold text-cyan-300 border-cyan-500/30 hover:border-cyan-400/50 cursor-pointer"
+                    title="Open GST & TDS Tax Calculator"
+                  >
+                    <Calculator className="w-3 h-3 text-cyan-400" />
+                    <span>GST/TDS Calculator</span>
+                  </button>
+                )}
               </div>
 
               {/* Real-time Net Calculation Display */}
-              <div className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="pt-2.5 border-t border-white/[0.08] flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                     Calculated Net Take-Home
                   </span>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-slate-400">
                     Gross ({formatCurrency(grossNum, currency)}) - Deductions ({formatCurrency(deductionsNum, currency)})
                   </span>
                 </div>
@@ -458,7 +485,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
                     maxLength={100}
-                    className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-emerald-500/60 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                    className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs border-emerald-500/60"
                     autoFocus
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-emerald-400 font-mono">
@@ -469,14 +496,14 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 <select
                   value={category}
                   onChange={handleCategorySelectChange}
-                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs cursor-pointer"
                 >
                   {allCategories.map((cat) => (
-                    <option key={cat} value={cat}>
+                    <option key={cat} value={cat} className="bg-[var(--card-bg)] text-white">
                       {cat}
                     </option>
                   ))}
-                  <option value="custom_other">+ Type Custom Category...</option>
+                  <option value="custom_other" className="bg-[var(--card-bg)] text-emerald-400">+ Type Custom Category...</option>
                 </select>
               )}
             </div>
@@ -495,7 +522,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   maxLength={150}
-                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs placeholder-slate-500"
                 />
               </div>
 
@@ -508,10 +535,10 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs cursor-pointer"
                 >
                   {PAYMENT_METHODS.map((method) => (
-                    <option key={method} value={method}>
+                    <option key={method} value={method} className="bg-slate-900 text-white">
                       {method}
                     </option>
                   ))}
@@ -531,7 +558,7 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 value={referenceId}
                 onChange={(e) => setReferenceId(e.target.value)}
                 maxLength={100}
-                className="w-full px-3 py-2.5 min-h-[42px] rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 font-mono focus:border-emerald-500 focus:outline-none"
+                className="w-full px-3 py-2.5 min-h-[42px] rounded-xl liquid-glass-input text-white text-xs placeholder-slate-500 font-mono"
               />
             </div>
 
@@ -547,13 +574,13 @@ export const EarningModal: React.FC<EarningModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 maxLength={1000}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:border-emerald-500 focus:outline-none resize-none"
+                className="w-full px-3 py-2.5 rounded-xl liquid-glass-input text-white text-xs placeholder-slate-500 resize-none"
               />
             </div>
           </div>
 
           {/* Sticky Actions Footer */}
-          <div className="shrink-0 px-4 sm:px-6 py-3.5 border-t border-slate-800 bg-slate-900/95 flex items-center justify-between gap-3">
+          <div className="shrink-0 px-4 sm:px-6 py-3.5 border-t border-white/[0.08] bg-[var(--app-bg)]/40 backdrop-blur-md flex items-center justify-between gap-3">
             {/* Delete button in edit mode */}
             {mode === 'edit' && initialData && onDelete ? (
               <button
@@ -575,14 +602,14 @@ export const EarningModal: React.FC<EarningModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 min-h-[40px] rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className="px-4 py-2 min-h-[40px] rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-5 py-2 min-h-[40px] rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 min-h-[40px] rounded-xl liquid-glass-emerald hover:brightness-110 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />

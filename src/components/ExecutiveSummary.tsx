@@ -1,7 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Earning } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatPercent } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import {
   Briefcase,
   TrendingUp,
@@ -11,12 +12,10 @@ import {
   Printer,
   Plus,
   ArrowUpRight,
-  Clock,
-  PieChart,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import { hapticTap, hapticPress, hapticSuccess } from '../utils/haptics';
 
 interface ExecutiveSummaryProps {
   earnings: Earning[];
@@ -40,11 +39,10 @@ export const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
   // Filter for Current Month to Date (MTD)
   const monthEarnings = earnings.filter((e) => e.date.startsWith(currentMonthPrefix));
 
-  // If no transactions yet in the current month, fall back gracefully to all current active earnings
   const activeDataset = monthEarnings.length > 0 ? monthEarnings : earnings;
   const isFallbackAllTime = monthEarnings.length === 0 && earnings.length > 0;
 
-  // 1. Total Monthly Revenue (Gross & Net)
+  // 1. Total Monthly Revenue
   const totalGross = activeDataset.reduce((sum, e) => sum + (e.grossAmount || 0), 0);
   const totalNet = activeDataset.reduce((sum, e) => sum + (e.netAmount || 0), 0);
   const totalDeductions = activeDataset.reduce((sum, e) => sum + (e.deductions || 0), 0);
@@ -92,62 +90,55 @@ export const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
   const averageDealSize =
     activeDataset.length > 0 ? totalGross / activeDataset.length : 0;
 
-  const marginHealthDescriptor =
-    netProfitMargin >= 75
-      ? 'exceptionally strong'
-      : netProfitMargin >= 50
-      ? 'healthy'
-      : netProfitMargin >= 25
-      ? 'moderate'
-      : 'compressed';
-
   const handlePrint = () => {
+    hapticSuccess();
     window.print();
   };
 
   return (
-    <section className="bg-slate-900/80 border border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden transition-all hover:border-slate-750">
+    <section className="bg-[#0d1630] border border-blue-500/20 rounded-xl p-5 sm:p-6 transition-all text-white shadow-sm">
       {/* Executive Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-blue-500/15">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 shrink-0">
-            <Briefcase className="w-5 h-5 stroke-[2.2]" />
+          <div className="w-8 h-8 rounded-lg bg-blue-900/50 text-blue-300 flex items-center justify-center shrink-0 border border-blue-400/20">
+            <Briefcase className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
                 Executive Financial Summary
               </h2>
-              <span className="text-slate-600">·</span>
-              <span className="text-xs font-semibold text-emerald-400">
-                {isFallbackAllTime ? 'All-Time Aggregated' : `${currentMonthName} ${currentYear} MTD`}
+              <span className="text-blue-500/30">·</span>
+              <span className="text-xs font-mono font-medium text-slate-300">
+                {isFallbackAllTime ? 'All-Time' : `${currentMonthName} ${currentYear}`}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-              <span>High-level monthly KPIs, operating margins & revenue concentration</span>
-              <span className="text-slate-600 hidden md:inline">·</span>
-              <span className="text-slate-500 hidden md:inline">Real-Time Cloud Sync</span>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Operating margins, collection efficiency, and revenue concentration
             </p>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5 self-start sm:self-auto print:hidden">
+        <div className="flex items-center gap-2 self-start sm:self-auto print:hidden">
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111e40] hover:bg-[#182955] text-xs font-semibold text-slate-200 hover:text-white border border-blue-500/20 transition-all cursor-pointer tactile-btn"
             title="Print Executive Brief"
           >
-            <Printer className="w-3.5 h-3.5 text-slate-300" />
-            <span>Print Brief</span>
+            <Printer className="w-3.5 h-3.5 text-blue-400" />
+            <span>Print</span>
           </button>
 
           {onOpenNewEarningModal && (
             <button
-              onClick={onOpenNewEarningModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all cursor-pointer"
+              onClick={() => {
+                hapticPress();
+                onOpenNewEarningModal();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-slate-950 font-bold text-xs shadow-xs transition-all cursor-pointer border border-white tactile-btn"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span className="hidden sm:inline">Record Earning</span>
             </button>
           )}
@@ -155,183 +146,181 @@ export const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
       </div>
 
       {/* 4-Column Executive KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
         {/* KPI 1: Total Monthly Revenue */}
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-3">
+        <motion.div
+          whileHover={{ y: -4, backgroundColor: '#132249', borderColor: 'rgba(96, 165, 250, 0.4)' }}
+          onClick={hapticTap}
+          className="p-3.5 rounded-lg bg-[#101c3d] border border-blue-500/15 flex flex-col justify-between space-y-2.5 cursor-pointer tactile-press transition-colors"
+        >
           <div>
-            <div className="flex items-center justify-between text-slate-400 mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Total Monthly Revenue
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Total Billed
               </span>
-              <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5" />
-              </div>
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             </div>
 
             <div className="text-2xl font-bold tracking-tight text-white font-mono tabular-nums">
               {formatCurrency(totalGross, currency)}
             </div>
 
-            <div className="text-xs font-medium text-emerald-400 font-mono tabular-nums mt-0.5">
-              Net: {formatCurrency(totalNet, currency)}
+            <div className="text-xs font-mono tabular-nums text-slate-300 mt-0.5">
+              Net: <span className="text-white font-bold">{formatCurrency(totalNet, currency)}</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Volume: {activeDataset.length} entries</span>
-            <span>Avg: {formatCurrency(averageDealSize, currency)}</span>
+          <div className="pt-2 border-t border-blue-500/10 flex items-center justify-between text-[11px] text-slate-400">
+            <span>{activeDataset.length} entries</span>
+            <span>Avg {formatCurrency(averageDealSize, currency)}</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 2: Net Profit Margin Percentage */}
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-3">
+        <motion.div
+          whileHover={{ y: -4, backgroundColor: '#132249', borderColor: 'rgba(96, 165, 250, 0.4)' }}
+          onClick={hapticTap}
+          className="p-3.5 rounded-lg bg-[#101c3d] border border-blue-500/15 flex flex-col justify-between space-y-2.5 cursor-pointer tactile-press transition-colors"
+        >
           <div>
-            <div className="flex items-center justify-between text-slate-400 mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-                Net Profit Margin
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Retention Margin
               </span>
-              <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                <Percent className="w-3.5 h-3.5" />
-              </div>
+              <Percent className="w-3.5 h-3.5 text-blue-400" />
             </div>
 
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold tracking-tight text-emerald-400 font-mono tabular-nums">
+              <span className="text-2xl font-bold tracking-tight text-white font-mono tabular-nums">
                 {netProfitMargin.toFixed(1)}%
               </span>
               <span className="text-xs text-slate-400">retention</span>
             </div>
 
-            {/* Retention Bar */}
-            <div className="w-full h-1.5 rounded-full bg-slate-900 border border-slate-800 mt-2 overflow-hidden">
-              <div
+            <div className="w-full h-1.5 rounded-full bg-blue-950 mt-2 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, Math.max(0, netProfitMargin))}%` }}
+                transition={{ duration: 1, delay: 0.5 }}
                 className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.max(0, netProfitMargin))}%` }}
               />
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Taxes & Cuts:</span>
-            <span className="text-amber-400 font-mono tabular-nums">
+          <div className="pt-2 border-t border-blue-500/10 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Deductions:</span>
+            <span className="text-amber-400 font-mono font-bold">
               -{formatCurrency(totalDeductions, currency)} ({deductionRatio.toFixed(1)}%)
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 3: Top-Performing Category */}
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-3">
+        <motion.div
+          whileHover={{ y: -4, backgroundColor: '#132249', borderColor: 'rgba(96, 165, 250, 0.4)' }}
+          onClick={hapticTap}
+          className="p-3.5 rounded-lg bg-[#101c3d] border border-blue-500/15 flex flex-col justify-between space-y-2.5 cursor-pointer tactile-press transition-colors"
+        >
           <div>
-            <div className="flex items-center justify-between text-slate-400 mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-400">
-                Top Performing Category
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Top Category
               </span>
-              <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                <Award className="w-3.5 h-3.5" />
-              </div>
+              <Award className="w-3.5 h-3.5 text-amber-400" />
             </div>
 
-            <div className="text-base font-bold text-white tracking-tight truncate" title={topCategoryName}>
+            <div className="text-sm font-bold text-white truncate" title={topCategoryName}>
               {topCategoryName}
             </div>
 
-            <div className="text-xs font-mono tabular-nums text-emerald-400 mt-0.5">
-              {formatCurrency(topCategoryNet, currency)} net take-home
+            <div className="text-xs font-mono tabular-nums font-bold text-slate-200 mt-0.5">
+              {formatCurrency(topCategoryNet, currency)} net
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+          <div className="pt-2 border-t border-blue-500/10 flex items-center justify-between text-[11px] text-slate-400">
             <span>Share of Net:</span>
-            <span className="text-white font-mono tabular-nums font-semibold">
-              {topCategoryShare.toFixed(1)}% of total
+            <span className="font-mono font-bold text-white">
+              {topCategoryShare.toFixed(1)}%
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* KPI 4: Cash Realization & Collection Efficiency */}
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-3">
+        <motion.div
+          whileHover={{ y: -4, backgroundColor: '#132249', borderColor: 'rgba(96, 165, 250, 0.4)' }}
+          onClick={hapticTap}
+          className="p-3.5 rounded-lg bg-[#101c3d] border border-blue-500/15 flex flex-col justify-between space-y-2.5 cursor-pointer tactile-press transition-colors"
+        >
           <div>
-            <div className="flex items-center justify-between text-slate-400 mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400">
-                Cash Realization
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Collection Rate
               </span>
-              <div className="w-6 h-6 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
-                <ShieldCheck className="w-3.5 h-3.5" />
-              </div>
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
             </div>
 
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold tracking-tight text-cyan-400 font-mono tabular-nums">
+              <span className="text-2xl font-bold tracking-tight text-white font-mono tabular-nums">
                 {collectionRate.toFixed(1)}%
               </span>
-              <span className="text-xs text-slate-400">settled</span>
+              <span className="text-xs text-slate-400">collected</span>
             </div>
 
-            <div className="text-xs text-slate-400 font-mono tabular-nums mt-0.5">
-              Collected: {formatCurrency(receivedNet, currency)}
+            <div className="text-xs font-mono tabular-nums text-slate-300 mt-0.5">
+              Settled: <span className="font-bold text-white">{formatCurrency(receivedNet, currency)}</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Pending Payout:</span>
-            <span className={pendingCount > 0 ? 'text-rose-400 font-mono font-medium' : 'text-slate-500'}>
+          <div className="pt-2 border-t border-blue-500/10 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Pending:</span>
+            <span className={pendingCount > 0 ? 'text-rose-400 font-mono font-bold' : 'text-slate-400'}>
               {formatCurrency(pendingNet, currency)}
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Professional Work Digest & Ledger Action Strip */}
-      <div className="mt-5 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-              pendingCount > 0
-                ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
-            }`}
-          >
+      {/* Professional Work Digest Strip */}
+      <div className="mt-4 p-3 rounded-lg bg-[#091126] border border-blue-500/15 flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs text-slate-200">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-6 h-6 rounded-md bg-blue-950 flex items-center justify-center shrink-0 border border-blue-400/20">
             {pendingCount > 0 ? (
-              <AlertCircle className="w-4 h-4" />
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
             ) : (
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             )}
           </div>
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-white">
-                {topCategory ? topCategoryName : 'All Ledger Entries'}
-              </span>
-              <span className="text-slate-600 font-mono hidden sm:inline">·</span>
-              <span className="text-emerald-400 font-mono font-medium">
-                {topCategory ? `${topCategoryShare.toFixed(1)}% of net income` : 'Ready'}
-              </span>
-              <span className="text-slate-600 font-mono hidden sm:inline">·</span>
-              <span className="text-slate-300">
-                Operating Margin: <strong className="text-white font-mono">{netProfitMargin.toFixed(1)}%</strong>
-              </span>
-              <span className="text-slate-600 font-mono hidden sm:inline">·</span>
-              <span className="text-cyan-400 font-mono font-medium">
-                {collectionRate.toFixed(1)}% Settled
-              </span>
-            </div>
-
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="font-bold text-white">
+              {topCategory ? topCategoryName : 'Ledger Active'}
+            </span>
+            <span className="text-blue-500/30">·</span>
+            <span>
+              Margin: <strong className="font-mono text-white">{netProfitMargin.toFixed(1)}%</strong>
+            </span>
+            <span className="text-blue-500/30">·</span>
+            <span className="font-medium text-slate-200">{collectionRate.toFixed(1)}% Settled</span>
+            <span className="text-blue-500/30">·</span>
+            <span className="text-slate-400 text-[11px]">
               {pendingCount > 0
-                ? `${pendingCount} transaction(s) pending settlement (${formatCurrency(pendingNet, currency)})`
-                : 'All recorded earnings in this billing period are fully realized.'}
-            </p>
+                ? `${pendingCount} invoice(s) pending (${formatCurrency(pendingNet, currency)})`
+                : 'All billings in period fully realized.'}
+            </span>
           </div>
         </div>
 
         {onNavigateToLedger && (
           <button
-            onClick={onNavigateToLedger}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white border border-slate-700 font-semibold text-xs transition-colors shrink-0 cursor-pointer print:hidden"
+            onClick={() => {
+              hapticTap();
+              onNavigateToLedger();
+            }}
+            className="flex items-center gap-1 text-xs font-semibold text-blue-300 hover:text-white transition-colors shrink-0 cursor-pointer print:hidden tactile-btn"
           >
-            <span>View Ledger</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Open Ledger</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

@@ -13,13 +13,17 @@ import {
   Edit2,
   Trash2,
   Copy,
-  Receipt,
   FileQuestion,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Plus,
+  CheckSquare,
+  Square,
+  MinusSquare,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
+import { hapticSelect, hapticTap, hapticPress, hapticSuccess } from '../utils/haptics';
 
 interface EarningsTableProps {
   earnings: Earning[];
@@ -28,6 +32,8 @@ interface EarningsTableProps {
   onDuplicate: (earning: Earning) => void;
   onDelete: (earning: Earning) => void;
   onNew: () => void;
+  onBulkUpdateStatus?: (ids: string[], status: PaymentStatus) => Promise<void>;
+  onBulkDelete?: (ids: string[]) => Promise<void>;
 }
 
 type SortField =
@@ -47,15 +53,20 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
   onDuplicate,
   onDelete,
   onNew,
+  onBulkUpdateStatus,
+  onBulkDelete,
 }) => {
   const { currency } = useAuth();
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
 
   // Sorting
   const handleSort = (field: SortField) => {
+    hapticTap();
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -74,58 +85,118 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
       if (valA === undefined || valA === null) valA = '';
       if (valB === undefined || valB === null) valB = '';
 
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        const cmp = valA.localeCompare(valB);
+        return sortOrder === 'asc' ? cmp : -cmp;
       }
 
-      const strA = String(valA).toLowerCase();
-      const strB = String(valB).toLowerCase();
-      if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
-      if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
   }, [earnings, sortField, sortOrder]);
 
   // Pagination
-  const totalPages = Math.ceil(sortedEarnings.length / pageSize) || 1;
+  const totalPages = Math.max(1, Math.ceil(sortedEarnings.length / pageSize));
   const validCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (validCurrentPage - 1) * pageSize;
   const paginatedEarnings = sortedEarnings.slice(startIndex, startIndex + pageSize);
 
-  // Sync currentPage whenever totalPages shrinks due to filtering
-  React.useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(Math.max(1, totalPages));
-    }
-  }, [totalPages, currentPage]);
-
   const handlePrevPage = () => {
-    setCurrentPage((p) => Math.max(1, Math.min(p, totalPages) - 1));
+    hapticTap();
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
   const handleNextPage = () => {
-    setCurrentPage((p) => Math.min(totalPages, Math.min(p, totalPages) + 1));
+    hapticTap();
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  // Selection
+  const toggleSelectAll = () => {
+    hapticSelect();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allCurrentPageSelected = paginatedEarnings.every((e) => next.has(e.id));
+      if (allCurrentPageSelected) {
+        paginatedEarnings.forEach((e) => next.delete(e.id));
+      } else {
+        paginatedEarnings.forEach((e) => next.add(e.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    hapticSelect();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Bulk actions
+  const handleBulkStatusChange = async (status: PaymentStatus) => {
+    if (!onBulkUpdateStatus || selectedIds.size === 0) return;
+    try {
+      setIsBulkActionLoading(true);
+      await onBulkUpdateStatus(Array.from(selectedIds), status);
+      hapticSuccess();
+      setSelectedIds(new Set());
+    } catch {
+      // handled
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (!onBulkDelete || selectedIds.size === 0) return;
+    const confirmMsg = `Delete ${selectedIds.size} selected transaction(s)? This cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      setIsBulkActionLoading(true);
+      await onBulkDelete(Array.from(selectedIds));
+      hapticSuccess();
+      setSelectedIds(new Set());
+    } catch {
+      // handled
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkExportCSV = () => {
+    hapticPress();
+    const selectedList = earnings.filter((e) => selectedIds.has(e.id));
+    exportEarningsToCSV(selectedList.length > 0 ? selectedList : sortedEarnings, currency);
   };
 
   const getStatusBadge = (status: PaymentStatus) => {
     switch (status) {
       case 'Received':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>Received</span>
           </span>
         );
       case 'Pending':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
             <span>Pending</span>
           </span>
         );
       case 'Partially Paid':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             <span>Partial</span>
           </span>
@@ -140,39 +211,39 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
       );
     }
     return sortOrder === 'asc' ? (
-      <ArrowUp className="w-3 h-3 text-emerald-400" />
+      <ArrowUp className="w-3 h-3 text-white" />
     ) : (
-      <ArrowDown className="w-3 h-3 text-emerald-400" />
+      <ArrowDown className="w-3 h-3 text-white" />
     );
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
-      {/* Header with Title, Count and Quick CSV Export */}
-      <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="bg-[#0d1630] border border-blue-500/20 rounded-xl overflow-hidden flex flex-col relative text-white shadow-lg shadow-blue-950/30 transition-colors">
+      {/* Header with Title and Count */}
+      <div className="p-3.5 sm:p-4 border-b border-blue-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Recorded Transactions
+            <h3 className="text-sm font-bold text-white tracking-tight">
+              Transactions
             </h3>
-            <span className="text-slate-600">·</span>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-blue-500/40">·</span>
+            <span className="text-xs font-mono font-medium text-slate-300">
               {earnings.length} entries
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Audit-ready daily ledger with instant view, edit, duplicate, and delete actions
-          </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto print:hidden">
           <button
-            onClick={() => exportEarningsToCSV(sortedEarnings, currency)}
+            onClick={() => {
+              hapticPress();
+              exportEarningsToCSV(sortedEarnings, currency);
+            }}
             disabled={earnings.length === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-40"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#111e40] hover:bg-[#182955] text-slate-200 border border-blue-500/20 transition-all cursor-pointer disabled:opacity-40 tactile-btn"
             title="Download CSV"
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-blue-400" />
             <span>Export CSV</span>
           </button>
         </div>
@@ -180,140 +251,176 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
 
       {/* Main Content Area */}
       {earnings.length === 0 ? (
-        <div className="p-10 sm:p-14 text-center flex flex-col items-center justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mb-3">
-            <FileQuestion className="w-7 h-7" />
+        <div className="p-10 text-center flex flex-col items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-blue-900/30 text-blue-300 flex items-center justify-center mb-2.5 border border-blue-500/20">
+            <FileQuestion className="w-5 h-5" />
           </div>
-          <h4 className="text-sm font-semibold text-white mb-1">No transactions found</h4>
-          <p className="text-xs text-slate-400 max-w-sm mb-5">
-            No entries match your active date, category, or search filters. Clear filters or record a new daily earning.
+          <h4 className="text-sm font-bold text-white mb-1">
+            No transactions found
+          </h4>
+          <p className="text-xs text-slate-400 max-w-sm mb-4">
+            No entries match your active filters. Try adjusting filters or record a new earning.
           </p>
           <button
-            onClick={onNew}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer min-h-[44px]"
+            onClick={() => {
+              hapticPress();
+              onNew();
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs bg-white hover:bg-blue-50 text-slate-950 transition-colors cursor-pointer border border-white tactile-btn"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Record New Earning</span>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Record Earning</span>
           </button>
         </div>
       ) : (
         <>
-          {/* ========================================================================= */}
-          {/* 1. MOBILE RESPONSIVE CARD FEED (block md:hidden) - ZERO HORIZONTAL SCROLL */}
-          {/* ========================================================================= */}
-          <div className="block md:hidden divide-y divide-slate-800/80">
-            {paginatedEarnings.map((earning) => (
-              <div
-                key={earning.id}
-                className="p-4 hover:bg-slate-800/30 transition-colors space-y-3"
-              >
-                {/* Top Row: Date, Client, Net Amount */}
+          {/* 1. MOBILE RESPONSIVE CARD FEED (hidden on md) */}
+          <div className="block md:hidden divide-y divide-blue-500/10">
+            {paginatedEarnings.map((earning) => {
+              const isSelected = selectedIds.has(earning.id);
+              return (
                 <div
-                  onClick={() => onView(earning)}
-                  className="flex items-start justify-between gap-3 cursor-pointer"
+                  key={earning.id}
+                  className={`p-3.5 transition-colors space-y-2.5 ${
+                    isSelected ? 'bg-blue-900/30' : 'hover:bg-blue-900/15'
+                  }`}
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-0.5">
-                      <span className="font-semibold text-white">
-                        {formatHumanDate(earning.date)}
-                      </span>
-                      <span className="text-slate-600">·</span>
-                      <span className="font-mono text-slate-500">{earning.date}</span>
-                    </div>
-                    <div className="font-bold text-sm text-slate-100 truncate">
-                      {earning.clientName || earning.category}
-                    </div>
-                    <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                      <span>{earning.category}</span>
-                      {earning.paymentMethod && (
-                        <>
-                          <span className="text-slate-600">·</span>
-                          <span className="text-slate-400">{earning.paymentMethod}</span>
-                        </>
-                      )}
-                      {earning.referenceId && (
-                        <>
-                          <span className="text-slate-600">·</span>
-                          <span className="font-mono text-[10px] text-slate-500">
-                            #{earning.referenceId}
+                  {/* Top Row */}
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSelectOne(earning.id, e)}
+                        className="p-1 -ml-1 text-slate-400 hover:text-white"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-500" />
+                        )}
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white text-sm truncate">
+                            {earning.clientName || 'General / Direct'}
                           </span>
-                        </>
-                      )}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <span>{formatHumanDate(earning.date)}</span>
+                          <span>•</span>
+                          <span className="text-slate-300 font-medium">{earning.category}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-base font-bold text-white">
+                        {formatCurrency(earning.netAmount, currency)}
+                      </div>
+                      <div className="mt-0.5">{getStatusBadge(earning.paymentStatus)}</div>
                     </div>
                   </div>
 
-                  {/* Net Amount & Status */}
-                  <div className="text-right shrink-0">
-                    <div className="font-mono tabular-nums font-bold text-emerald-400 text-base">
-                      {formatCurrency(earning.netAmount, currency)}
+                  {/* Financial Breakdown Badges */}
+                  <div className="flex items-center gap-3 text-xs font-mono py-1 px-2.5 rounded-lg bg-[#091126] border border-blue-500/15 text-slate-300">
+                    <div>
+                      <span className="text-slate-400">Gross: </span>
+                      <span className="font-semibold text-white">
+                        {formatCurrency(earning.grossAmount, currency)}
+                      </span>
                     </div>
-                    <div className="mt-1">{getStatusBadge(earning.paymentStatus)}</div>
-                  </div>
-                </div>
-
-                {/* Sub-Metric Breakdown (Gross vs Deductions) */}
-                <div className="flex items-center justify-between text-[11px] p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 font-mono">
-                  <div className="text-slate-400">
-                    Gross: <span className="text-slate-200">{formatCurrency(earning.grossAmount, currency)}</span>
-                  </div>
-                  <div className="text-slate-400">
-                    Deductions:{' '}
-                    {earning.deductions > 0 ? (
-                      <span className="text-amber-400">-{formatCurrency(earning.deductions, currency)}</span>
-                    ) : (
-                      <span className="text-slate-500">None</span>
+                    {earning.deductions > 0 && (
+                      <div>
+                        <span className="text-slate-400">TDS: </span>
+                        <span className="font-semibold text-amber-400">
+                          -{formatCurrency(earning.deductions, currency)}
+                        </span>
+                      </div>
                     )}
+                    <div className="ml-auto text-slate-400">
+                      {earning.paymentMethod || 'Direct'}
+                    </div>
+                  </div>
+
+                  {/* Action Bar */}
+                  <div className="flex items-center justify-end gap-1.5 pt-1">
+                    <button
+                      onClick={() => {
+                        hapticTap();
+                        onView(earning);
+                      }}
+                      className="p-1.5 rounded-md bg-[#111e40] text-slate-300 hover:text-white border border-blue-500/20 transition-colors tactile-btn"
+                      title="View"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        hapticTap();
+                        onDuplicate(earning);
+                      }}
+                      className="p-1.5 rounded-md bg-[#111e40] text-slate-300 hover:text-white border border-blue-500/20 transition-colors tactile-btn"
+                      title="Duplicate"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        hapticTap();
+                        onEdit(earning);
+                      }}
+                      className="p-1.5 rounded-md bg-[#111e40] text-slate-300 hover:text-white border border-blue-500/20 transition-colors tactile-btn"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        hapticPress();
+                        onDelete(earning);
+                      }}
+                      className="p-1.5 rounded-md bg-[#111e40] text-slate-300 hover:text-rose-400 border border-blue-500/20 transition-colors tactile-btn"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Mobile Action Bar: Touch Targets >= 44px */}
-                <div className="flex items-center justify-between pt-1 gap-2">
-                  <button
-                    onClick={() => onView(earning)}
-                    className="flex-1 min-h-[42px] py-2 px-2.5 rounded-xl bg-slate-800/90 active:bg-slate-750 text-slate-300 active:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/80 transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Voucher</span>
-                  </button>
-
-                  <button
-                    onClick={() => onEdit(earning)}
-                    className="flex-1 min-h-[42px] py-2 px-2.5 rounded-xl bg-slate-800/90 active:bg-slate-750 text-emerald-400 active:text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/80 transition-colors"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-
-                  <button
-                    onClick={() => onDuplicate(earning)}
-                    className="min-h-[42px] min-w-[42px] px-3 rounded-xl bg-slate-800/90 active:bg-slate-750 text-slate-400 active:text-cyan-400 border border-slate-700/80 flex items-center justify-center transition-colors"
-                    title="Duplicate Entry"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => onDelete(earning)}
-                    className="min-h-[42px] min-w-[42px] px-3 rounded-xl bg-slate-800/90 active:bg-rose-500/20 text-slate-400 active:text-rose-400 border border-slate-700/80 flex items-center justify-center transition-colors"
-                    title="Delete Entry"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* ========================================================================= */}
-          {/* 2. DESKTOP / TABLET DATA GRID TABLE (hidden md:block)                     */}
-          {/* ========================================================================= */}
+          {/* 2. DESKTOP DATA GRID */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-semibold select-none">
+              <thead className="bg-[#091126] border-b border-blue-500/20 text-slate-300 text-[11px] uppercase tracking-wider font-bold select-none">
                 <tr>
+                  <th className="py-2.5 px-3 w-10 text-center">
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className="p-1 rounded text-slate-400 hover:text-white transition-colors cursor-pointer tactile-btn"
+                      title={
+                        paginatedEarnings.length > 0 &&
+                        paginatedEarnings.every((e) => selectedIds.has(e.id))
+                          ? 'Deselect all'
+                          : 'Select all'
+                      }
+                    >
+                      {paginatedEarnings.length > 0 &&
+                      paginatedEarnings.every((e) => selectedIds.has(e.id)) ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-400" />
+                      ) : paginatedEarnings.some((e) => selectedIds.has(e.id)) ? (
+                        <MinusSquare className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-500" />
+                      )}
+                    </button>
+                  </th>
                   <th
                     onClick={() => handleSort('date')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Date</span>
@@ -322,177 +429,282 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
                   </th>
                   <th
                     onClick={() => handleSort('clientName')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>Client / Reference</span>
+                      <span>Client / Source</span>
                       {renderSortIndicator('clientName')}
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('category')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>Category & Method</span>
+                      <span>Category</span>
                       {renderSortIndicator('category')}
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('grossAmount')}
-                    className="py-3.5 px-4 text-right cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 text-right cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center justify-end gap-1.5">
-                      <span>Gross</span>
+                      <span>Gross Billed</span>
                       {renderSortIndicator('grossAmount')}
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('deductions')}
-                    className="py-3.5 px-4 text-right cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 text-right cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center justify-end gap-1.5">
-                      <span>Deductions</span>
+                      <span>Taxes / TDS</span>
                       {renderSortIndicator('deductions')}
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('netAmount')}
-                    className="py-3.5 px-4 text-right cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 text-right cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center justify-end gap-1.5">
-                      <span>Net Earnings</span>
+                      <span>Net Realized</span>
                       {renderSortIndicator('netAmount')}
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('paymentStatus')}
-                    className="py-3.5 px-4 text-center cursor-pointer hover:text-white transition-colors group"
+                    className="py-2.5 px-3.5 text-center cursor-pointer hover:text-white transition-colors group"
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <span>Status</span>
                       {renderSortIndicator('paymentStatus')}
                     </div>
                   </th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 font-medium">
-                {paginatedEarnings.map((earning) => (
-                  <tr
-                    key={earning.id}
-                    className="hover:bg-slate-800/40 transition-colors group"
-                  >
-                    {/* Date */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-semibold text-white">
-                        {formatHumanDate(earning.date)}
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        {earning.date}
-                      </div>
-                    </td>
-
-                    {/* Client / Reference */}
-                    <td className="py-3 px-4 max-w-[220px]">
-                      <div className="font-semibold text-slate-200 truncate">
-                        {earning.clientName || 'General / Direct'}
-                      </div>
-                      {earning.referenceId ? (
-                        <div
-                          className="text-[10px] text-slate-400 font-mono truncate"
-                          title={earning.referenceId}
+              <tbody className="divide-y divide-blue-500/10">
+                {paginatedEarnings.map((earning) => {
+                  const isSelected = selectedIds.has(earning.id);
+                  return (
+                    <tr
+                      key={earning.id}
+                      className={`transition-colors group ${
+                        isSelected
+                          ? 'bg-blue-900/30'
+                          : 'hover:bg-blue-900/15'
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => toggleSelectOne(earning.id, e)}
+                          className="p-1 rounded text-slate-500 hover:text-white transition-colors cursor-pointer tactile-btn"
                         >
-                          Ref: {earning.referenceId}
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-emerald-400" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-500 group-hover:text-slate-300" />
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-2.5 px-3.5 whitespace-nowrap">
+                        <div className="font-semibold text-slate-200">
+                          {formatHumanDate(earning.date)}
                         </div>
-                      ) : (
-                        <div className="text-[10px] text-slate-500">No invoice #</div>
-                      )}
-                    </td>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          {earning.date}
+                        </div>
+                      </td>
 
-                    {/* Category & Payment Method */}
-                    <td className="py-3 px-4">
-                      <div className="text-slate-200 font-medium">{earning.category}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {earning.paymentMethod || 'Direct'}
-                      </div>
-                    </td>
+                      {/* Client */}
+                      <td className="py-2.5 px-3.5 max-w-[200px]">
+                        <div className="font-bold text-white truncate">
+                          {earning.clientName || 'General / Direct'}
+                        </div>
+                        {earning.referenceId ? (
+                          <div
+                            className="text-[10px] text-slate-400 font-mono truncate"
+                            title={earning.referenceId}
+                          >
+                            Ref: {earning.referenceId}
+                          </div>
+                        ) : null}
+                      </td>
 
-                    {/* Gross */}
-                    <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-300">
-                      {formatCurrency(earning.grossAmount, currency)}
-                    </td>
-
-                    {/* Deductions */}
-                    <td className="py-3 px-4 text-right font-mono tabular-nums text-amber-400/90">
-                      {earning.deductions > 0 ? (
-                        <span>-{formatCurrency(earning.deductions, currency)}</span>
-                      ) : (
-                        <span className="text-slate-600">—</span>
-                      )}
-                    </td>
-
-                    {/* Net Amount */}
-                    <td className="py-3 px-4 text-right font-mono tabular-nums font-bold text-emerald-400 text-sm">
-                      {formatCurrency(earning.netAmount, currency)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3 px-4 text-center whitespace-nowrap">
-                      {getStatusBadge(earning.paymentStatus)}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => onView(earning)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="View Details"
+                      {/* Category & Payment Method */}
+                      <td className="py-2.5 px-3.5 max-w-[160px]">
+                        <div
+                          className="font-medium text-slate-200 truncate"
+                          title={earning.category}
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onDuplicate(earning)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Duplicate as new entry"
+                          {earning.category}
+                        </div>
+                        <div
+                          className="text-[10px] text-slate-400 truncate"
+                          title={earning.paymentMethod || 'Direct'}
                         >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onEdit(earning)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Edit Transaction"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(earning)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Delete Transaction"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {earning.paymentMethod || 'Direct'}
+                        </div>
+                      </td>
+
+                      {/* Gross */}
+                      <td className="py-2.5 px-3.5 text-right font-mono tabular-nums font-medium text-slate-200">
+                        {formatCurrency(earning.grossAmount, currency)}
+                      </td>
+
+                      {/* Deductions */}
+                      <td className="py-2.5 px-3.5 text-right font-mono tabular-nums text-amber-400 font-bold">
+                        {earning.deductions > 0 ? (
+                          <span>-{formatCurrency(earning.deductions, currency)}</span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </td>
+
+                      {/* Net Amount (Pure Crisp White) */}
+                      <td className="py-2.5 px-3.5 text-right font-mono tabular-nums font-bold text-sm text-white">
+                        {formatCurrency(earning.netAmount, currency)}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-2.5 px-3.5 text-center whitespace-nowrap">
+                        {getStatusBadge(earning.paymentStatus)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              hapticTap();
+                              onView(earning);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-white hover:bg-blue-900/40 transition-colors cursor-pointer tactile-btn"
+                            title="View"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              hapticTap();
+                              onDuplicate(earning);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-white hover:bg-blue-900/40 transition-colors cursor-pointer tactile-btn"
+                            title="Duplicate"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              hapticTap();
+                              onEdit(earning);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-white hover:bg-blue-900/40 transition-colors cursor-pointer tactile-btn"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              hapticPress();
+                              onDelete(earning);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-blue-900/40 transition-colors cursor-pointer tactile-btn"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Table Footer with Responsive Pagination & Page Size */}
-          <div className="p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          {/* Floating Minimalist Bulk Actions Bar */}
+          {selectedIds.size > 0 && (
+            <div className="sticky bottom-3 z-30 px-3 sm:px-6 my-2 animate-fadeIn">
+              <div className="bg-[#0d1836] border border-blue-500/30 rounded-xl p-2.5 shadow-2xl flex flex-wrap items-center justify-between gap-3 text-white">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded border border-blue-500/30 bg-[#111e40] text-slate-200 text-xs font-mono font-bold">
+                    {selectedIds.size} selected
+                  </span>
+                  <button
+                    onClick={() => {
+                      hapticTap();
+                      setSelectedIds(new Set());
+                    }}
+                    className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer tactile-btn"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <div className="flex items-center flex-wrap gap-1.5">
+                  {onBulkUpdateStatus && (
+                    <>
+                      <button
+                        onClick={() => handleBulkStatusChange('Received')}
+                        disabled={isBulkActionLoading}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#111e40] hover:bg-[#182955] text-xs font-bold text-emerald-400 cursor-pointer disabled:opacity-50 tactile-btn border border-blue-500/20"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Mark Received</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusChange('Pending')}
+                        disabled={isBulkActionLoading}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#111e40] hover:bg-[#182955] text-xs font-bold text-rose-400 cursor-pointer disabled:opacity-50 tactile-btn border border-blue-500/20"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Mark Pending</span>
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    onClick={handleBulkExportCSV}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#111e40] hover:bg-[#182955] text-xs font-semibold text-slate-200 cursor-pointer tactile-btn border border-blue-500/20"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>CSV</span>
+                  </button>
+
+                  {onBulkDelete && (
+                    <button
+                      onClick={handleBulkDeleteConfirm}
+                      disabled={isBulkActionLoading}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#111e40] hover:bg-[#182955] text-xs font-bold text-rose-400 cursor-pointer disabled:opacity-50 tactile-btn border border-blue-500/20"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Table Footer with Pagination */}
+          <div className="p-3 border-t border-blue-500/15 bg-[#091126] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-300">
             <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-2">
-                <span>Show</span>
+                <span>Rows:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
+                    hapticSelect();
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white focus:outline-none cursor-pointer"
+                  className="bg-[#101c3d] border border-blue-500/25 text-white rounded px-2 py-0.5 text-xs font-mono focus:outline-none cursor-pointer"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -500,34 +712,31 @@ export const EarningsTable: React.FC<EarningsTableProps> = ({
                 </select>
               </div>
 
-              <span className="font-mono">
-                {startIndex + 1}-{Math.min(startIndex + pageSize, sortedEarnings.length)} of{' '}
-                {sortedEarnings.length}
+              <span className="font-mono text-slate-400">
+                {startIndex + 1}-{Math.min(startIndex + pageSize, sortedEarnings.length)} of {sortedEarnings.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
               <button
                 onClick={handlePrevPage}
                 disabled={validCurrentPage === 1}
-                className="min-h-[38px] px-3 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
+                className="p-1 rounded bg-[#101c3d] border border-blue-500/25 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer tactile-btn hover:bg-blue-900/40"
                 title="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span className="sm:hidden">Prev</span>
               </button>
 
-              <span className="px-2 font-mono text-white text-xs">
-                Page {validCurrentPage} / {totalPages}
+              <span className="px-2 font-mono text-xs font-bold text-white">
+                {validCurrentPage} / {totalPages}
               </span>
 
               <button
                 onClick={handleNextPage}
                 disabled={validCurrentPage === totalPages}
-                className="min-h-[38px] px-3 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
+                className="p-1 rounded bg-[#101c3d] border border-blue-500/25 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer tactile-btn hover:bg-blue-900/40"
                 title="Next page"
               >
-                <span className="sm:hidden">Next</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

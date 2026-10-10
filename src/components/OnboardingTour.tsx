@@ -207,10 +207,13 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
         title="Click anywhere outside to close tour"
       />
 
-      {/* Tour Dialog Modal - Guaranteed to fit on any screen without cutting off buttons */}
-      <div className="relative bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full z-10 flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden my-auto">
+      {/* Tour Dialog Modal - Liquid Glass Elevated */}
+      <div className="relative liquid-glass-elevated border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full z-10 flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden my-auto animate-fadeIn">
+        {/* Specular Highlight Rim */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
         {/* Sticky Header with Prominent Close Button */}
-        <div className="shrink-0 px-4 sm:px-6 py-3.5 border-b border-slate-800 bg-slate-900 flex items-center justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-slate-950/40 backdrop-blur-md flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-[11px] sm:text-xs font-bold text-emerald-400 uppercase tracking-wider truncate">
               {currentStep.badge}
@@ -226,7 +229,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             </button>
             <button
               onClick={handleFinish}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-300 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              className="px-3 py-1.5 rounded-xl liquid-glass-button hover:border-rose-500/30 hover:text-rose-300 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               title="Close Tour (Esc)"
             >
               <span>Close</span>
@@ -238,7 +241,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
         {/* Scrollable Step Content Body */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl liquid-glass-subtle flex items-center justify-center shrink-0 shadow-inner">
               {currentStep.icon}
             </div>
             <div>
@@ -252,13 +255,13 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
           </div>
 
           {/* Key Bullet Points Box */}
-          <div className="space-y-2 bg-slate-950/80 border border-slate-800 rounded-xl p-3.5">
+          <div className="space-y-2 liquid-glass-subtle rounded-2xl p-4">
             {currentStep.keyPoints.map((item, idx) => (
               <div key={idx} className="flex items-start gap-2 text-xs">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
                   <strong className="text-white font-semibold">{item.label}:</strong>{' '}
-                  <span className="text-slate-400">{item.detail}</span>
+                  <span className="text-slate-300">{item.detail}</span>
                 </div>
               </div>
             ))}
@@ -266,7 +269,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
           {/* Helpful Tip Footer Box */}
           {currentStep.tip && (
-            <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center gap-2 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="leading-tight">{currentStep.tip}</span>
             </div>
@@ -274,7 +277,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
         </div>
 
         {/* Sticky Tour Navigation Footer - Always Visible on Screen */}
-        <div className="shrink-0 px-4 sm:px-6 py-3.5 border-t border-slate-800 bg-slate-900/95 flex items-center justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-6 py-3.5 border-t border-white/[0.08] bg-slate-950/40 backdrop-blur-md flex items-center justify-between gap-3">
           {/* Step Dots */}
           <div className="flex items-center gap-1.5">
             {TOUR_STEPS.map((_, idx) => (
@@ -283,8 +286,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                 onClick={() => setCurrentStepIndex(idx)}
                 className={`h-2 rounded-full transition-all cursor-pointer ${
                   currentStepIndex === idx
-                    ? 'w-5 bg-emerald-400'
-                    : 'w-2 bg-slate-700 hover:bg-slate-600'
+                    ? 'w-5 bg-emerald-400 shadow-sm shadow-emerald-400/50'
+                    : 'w-2 bg-white/20 hover:bg-white/40'
                 }`}
                 title={`Go to Step ${idx + 1}`}
               />
@@ -296,7 +299,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             {!isFirstStep && (
               <button
                 onClick={handlePrev}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -306,7 +309,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             {isLastStep ? (
               <button
                 onClick={handleRecordFirst}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl liquid-glass-emerald hover:brightness-110 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Start Recording</span>
@@ -314,7 +317,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             ) : (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-1 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-1 px-4 py-2 rounded-xl liquid-glass-emerald hover:brightness-110 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />

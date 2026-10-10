@@ -7,16 +7,13 @@ import {
   Check,
   Lock,
   ArrowRight,
-  PieChart,
-  FileSpreadsheet,
-  Zap,
-  Target,
-  BarChart3,
-  Sparkles,
   Receipt,
-  Wallet,
+  BarChart3,
+  Target,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { isConfigValid } from '../firebase';
+import { hapticPress } from '../utils/haptics';
 
 export const LoginScreen: React.FC = () => {
   const { loginWithGoogle } = useAuth();
@@ -24,6 +21,7 @@ export const LoginScreen: React.FC = () => {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const handleSignIn = async () => {
+    hapticPress();
     setIsSigningIn(true);
     try {
       await loginWithGoogle();
@@ -36,127 +34,109 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white relative overflow-hidden">
-      {/* Background ambient lighting glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[550px] bg-gradient-to-b from-emerald-500/15 via-teal-500/10 to-transparent blur-3xl -z-10 pointer-events-none" />
-      <div className="absolute bottom-10 -right-20 w-[600px] h-[600px] bg-cyan-500/10 blur-3xl -z-10 pointer-events-none" />
-      <div className="absolute top-1/3 -left-32 w-[500px] h-[500px] bg-emerald-600/10 blur-3xl -z-10 pointer-events-none" />
+    <div className="min-h-screen bg-[var(--app-bg)] text-slate-100 flex flex-col justify-between selection:bg-blue-900 selection:text-white relative">
+      {/* Subtle top hairline */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent pointer-events-none" />
 
-      {/* Top Header - Super Clean with NO Top Sign In Button */}
-      <header className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-xl shadow-emerald-500/25">
-            <TrendingUp className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+      {/* Top Header */}
+      <header className="max-w-6xl mx-auto w-full px-6 sm:px-8 py-6 flex items-center justify-between border-b border-blue-500/15">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-white text-slate-950 flex items-center justify-center font-bold shadow-md shadow-blue-500/20">
+            <TrendingUp className="w-4 h-4 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-white">
               rishi Jha
             </h1>
-            <p className="text-xs text-emerald-400 font-medium">Professional GST and TDS Accountant</p>
+            <p className="text-[11px] text-slate-400">Professional GST and TDS Accountant</p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-emerald-400 px-3.5 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-950/40 backdrop-blur-md">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Private & Verified Cloud Storage</span>
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+          <span>Encrypted Cloud Storage</span>
         </div>
       </header>
 
-      {/* Main Big Hero Section */}
-      <main className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-8 sm:py-16 flex-1 flex flex-col items-center justify-center">
-        {/* Hero Content Header */}
-        <div className="max-w-4xl text-center space-y-6 mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 text-xs font-semibold text-emerald-400 shadow-sm backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Smart Financial Tracking for Independent Creators, Freelancers & Businesses</span>
-          </div>
-
-          <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08]">
-            Master your daily cash flow with{' '}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-              complete clarity.
-            </span>
+      {/* Main Section */}
+      <main className="max-w-5xl mx-auto w-full px-6 sm:px-8 py-12 sm:py-16 flex-1 flex flex-col items-center justify-center">
+        {/* Hero Title */}
+        <div className="max-w-2xl text-center space-y-4 mb-10 sm:mb-12">
+          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+            Financial Ledger & Tax Computation Software
           </h2>
-
-          <p className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-            Record every daily earning, automate gross vs. net take-home calculations, monitor monthly run rates, and generate audit-ready financial statements.
+          <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Record daily revenue, compute 194J/C/I statutory TDS and GST, track monthly targets, and generate audit-ready statements.
           </p>
         </div>
 
-        {/* Hero Grid: Interactive Feature Visual + Google Sign-In Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-6xl items-stretch">
-          {/* Left Feature & Interactive Preview Card (7 cols) */}
-          <div className="lg:col-span-7 bg-slate-900/70 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl flex flex-col justify-between shadow-2xl relative overflow-hidden group">
-            {/* Subtle glow effect */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
+        {/* Center Grid: Feature Preview + Google Sign-In Card */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full items-stretch">
+          {/* Capabilities Card */}
+          <div className="md:col-span-7 bg-[var(--card-bg)] border border-blue-500/20 rounded-xl p-6 sm:p-7 flex flex-col justify-between shadow-lg shadow-blue-950/30">
             <div>
-              <div className="flex items-center justify-between pb-5 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
-                    <Receipt className="w-5 h-5" />
+              <div className="flex items-center justify-between pb-4 border-b border-blue-500/15">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--card-subtle)] text-blue-300 border border-blue-500/20 flex items-center justify-center">
+                    <Receipt className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white tracking-tight">Real-Time Financial Precision</h3>
-                    <p className="text-xs text-slate-400">Automatic Net Take-Home = Gross Revenue − Deductions</p>
+                    <h3 className="text-sm font-bold text-white">Daily Ledger & Tax Engine</h3>
+                    <p className="text-xs text-slate-400">Real-time calculations & statutory breakdown</p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  Cloud Ledger
-                </span>
+                <span className="text-xs font-mono text-blue-400">Cloud Sync</span>
               </div>
 
-              {/* Key Capabilities List */}
-              <div className="space-y-4 py-6">
-                <div className="flex items-start gap-3 text-sm text-slate-300">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="space-y-3.5 py-5">
+                <div className="flex items-start gap-2.5 text-xs text-slate-300">
+                  <div className="w-5 h-5 rounded-md bg-[var(--card-subtle)] text-emerald-400 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
                   </div>
                   <div>
                     <p className="font-semibold text-white">Daily Earning & Deduction Logging</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Track every transaction, tax deduction (TDS), payment mode, and client voucher in real-time.</p>
+                    <p className="text-slate-400 mt-0.5">Track gross invoiced amounts, statutory TDS deductions, and client settlement status.</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 text-sm text-slate-300">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-300">
+                  <div className="w-5 h-5 rounded-md bg-[var(--card-subtle)] text-emerald-400 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-white">Visual Analytics & Category Intelligence</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Interactive breakdown charts, monthly pacing curves, and client distribution insights.</p>
+                    <p className="font-semibold text-white">GST & TDS Statutory Tax Calculator</p>
+                    <p className="text-slate-400 mt-0.5">Built-in engine for 194J/194C/194I, CGST/SGST/IGST, Advance Tax schedules & shareable vouchers.</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 text-sm text-slate-300">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-300">
+                  <div className="w-5 h-5 rounded-md bg-[var(--card-subtle)] text-emerald-400 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
                   </div>
                   <div>
-                    <p className="font-semibold text-white">Multi-Currency & CSV Export</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Formatted for INR (₹), USD ($), EUR (€), and GBP (£) with one-click accounting exports.</p>
+                    <p className="font-semibold text-white">Monthly PDF Summaries & CSV Export</p>
+                    <p className="text-slate-400 mt-0.5">Printable monthly statements and full CSV accounting exports for filing.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Isolated private cloud workspace</span>
-              </span>
-              <span className="font-mono text-[11px] text-slate-500">v2.4 Production Ready</span>
+            <div className="pt-4 border-t border-blue-500/15 flex items-center justify-between text-xs text-slate-400">
+              <span>Verified Account Privacy</span>
+              <span className="font-mono text-blue-400">v2.4</span>
             </div>
           </div>
 
-          {/* Right Sign-In Card (5 cols) */}
-          <div className="lg:col-span-5 bg-gradient-to-b from-slate-900/95 to-slate-950 border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-2xl flex flex-col justify-between relative">
-            <div className="space-y-8">
-              <div className="text-center space-y-3">
-                <div className="inline-flex p-4 rounded-3xl bg-slate-800/90 border border-slate-700/80 shadow-inner">
-                  <Lock className="w-8 h-8 text-emerald-400" />
+          {/* Sign-In Card */}
+          <div className="md:col-span-5 bg-[var(--card-elevated)] border border-blue-500/25 rounded-xl p-6 sm:p-7 flex flex-col justify-between shadow-xl shadow-blue-950/40">
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="inline-flex p-3 rounded-xl bg-[var(--card-subtle)] text-blue-300 border border-blue-500/20 mx-auto">
+                  <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-extrabold text-white tracking-tight">Private User Workspace</h3>
-                <p className="text-sm text-slate-400 leading-relaxed max-w-xs mx-auto">
-                  Sign in with your Google account to access your personal financial ledger.
+                <h3 className="text-base font-bold text-white">Private Account Access</h3>
+                <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  Sign in with your verified Google account to access your personal financial records.
                 </p>
               </div>
 
@@ -164,12 +144,12 @@ export const LoginScreen: React.FC = () => {
               <button
                 onClick={handleSignIn}
                 disabled={isSigningIn || !isConfigValid}
-                className="w-full py-4 px-6 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-base flex items-center justify-center gap-3.5 shadow-xl shadow-white/10 hover:shadow-white/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+                className="w-full py-3 px-4 rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md border border-white tactile-btn"
               >
                 {isSigningIn ? (
-                  <div className="w-6 h-6 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -188,76 +168,59 @@ export const LoginScreen: React.FC = () => {
                     />
                   </svg>
                 )}
-                <span>{isSigningIn ? 'Authenticating...' : 'Sign in with Google'}</span>
-                <ArrowRight className="w-5 h-5 ml-auto text-slate-400 group-hover:translate-x-1 transition-transform" />
+                <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-auto text-slate-500" />
               </button>
             </div>
 
-            {/* Privacy & Account Isolation Notice */}
-            <div className="mt-8 pt-6 border-t border-slate-800/80 space-y-2 text-center">
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Verified Account Isolation</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Your entries are strictly private to your verified account. No other user can access or view your records.
+            <div className="mt-6 pt-4 border-t border-blue-500/15 text-center">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Entries are encrypted and private to your verified account.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Feature Highlights Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-6xl mt-12 sm:mt-16">
-          <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/60 hover:border-slate-700 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-3">
-              <Wallet className="w-5 h-5" />
+        {/* Feature Highlights Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-5xl mt-8">
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-blue-500/20 shadow-md">
+            <div className="w-7 h-7 rounded-md bg-[var(--card-subtle)] text-blue-300 border border-blue-500/20 flex items-center justify-center mb-2.5">
+              <BarChart3 className="w-3.5 h-3.5" />
             </div>
-            <h4 className="text-sm font-bold text-white mb-1">Daily Income Logging</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Track gross revenue, taxes, platform cuts, and payment methods with ease.
+            <h4 className="text-xs font-semibold text-slate-200 mb-0.5">Visual Analytics</h4>
+            <p className="text-xs text-slate-400">
+              Interactive revenue charts, monthly run-rate pacing, and category shares.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/60 hover:border-slate-700 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-3">
-              <BarChart3 className="w-5 h-5" />
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-blue-500/20 shadow-md">
+            <div className="w-7 h-7 rounded-md bg-[var(--card-subtle)] text-blue-300 border border-blue-500/20 flex items-center justify-center mb-2.5">
+              <Target className="w-3.5 h-3.5" />
             </div>
-            <h4 className="text-sm font-bold text-white mb-1">Visual Analytics</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Understand revenue distribution across categories, clients, and time intervals.
+            <h4 className="text-xs font-semibold text-slate-200 mb-0.5">Financial Goal Tracking</h4>
+            <p className="text-xs text-slate-400">
+              Set monthly net profit targets, monitor daily pacing, and projected outcomes.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/60 hover:border-slate-700 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-3">
-              <Target className="w-5 h-5" />
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-blue-500/20 shadow-md">
+            <div className="w-7 h-7 rounded-md bg-[var(--card-subtle)] text-blue-300 border border-blue-500/20 flex items-center justify-center mb-2.5">
+              <FileSpreadsheet className="w-3.5 h-3.5" />
             </div>
-            <h4 className="text-sm font-bold text-white mb-1">Financial Goal Engine</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Set monthly targets, monitor required daily run-rates, and achieve milestones.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/60 hover:border-slate-700 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-3">
-              <FileSpreadsheet className="w-5 h-5" />
-            </div>
-            <h4 className="text-sm font-bold text-white mb-1">CSV & Print Reports</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Export full financial ledgers formatted cleanly for accountants and tax filings.
+            <h4 className="text-xs font-semibold text-slate-200 mb-0.5">Audit-Ready Export</h4>
+            <p className="text-xs text-slate-400">
+              Formatted A4 PDF statements and CSV ledgers for tax compliance.
             </p>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <footer className="max-w-6xl mx-auto w-full px-6 sm:px-8 py-5 border-t border-blue-500/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
         <p>© 2026 rishi Jha • Professional GST and TDS Accountant</p>
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Cloud Sync Active
-          </span>
+        <div className="flex items-center gap-3">
+          <span className="text-blue-400">Cloud Sync Active</span>
+          <span>·</span>
           <span>Google Workspace Verified</span>
         </div>
       </footer>

@@ -18,7 +18,7 @@ import {
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
-import { Earning, EarningFormData, FilterState } from './types';
+import { Earning, EarningFormData, FilterState, PaymentStatus } from './types';
 import { getPresetDateRange, getTodayISO } from './utils/dateUtils';
 import { DashboardTab } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -31,6 +31,8 @@ import { DetailModal } from './components/DetailModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { ClearAllModal } from './components/ClearAllModal';
 import { NotFoundPage } from './components/NotFoundPage';
+import { GstTdsCalculatorModal } from './components/GstTdsCalculatorModal';
+import { MonthlySummaryModal } from './components/MonthlySummaryModal';
 
 // Dedicated Views
 import { OverviewView } from './components/views/OverviewView';
@@ -40,6 +42,7 @@ import { GoalsView } from './components/views/GoalsView';
 import { SettingsView } from './components/views/SettingsView';
 
 import { exportEarningsToCSV, exportDatabaseBackupJSON } from './utils/formatters';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function App() {
   const { user, monthlyGoal, currency, loading: authLoading } = useAuth();
@@ -86,6 +89,8 @@ export default function App() {
 
   const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isMonthlySummaryOpen, setIsMonthlySummaryOpen] = useState(false);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut for Command Palette
   useEffect(() => {
@@ -108,6 +113,8 @@ export default function App() {
       isDeleteModalOpen ||
       isClearAllModalOpen ||
       isTourOpen ||
+      isCalculatorOpen ||
+      isMonthlySummaryOpen ||
       isCommandPaletteOpen;
 
     if (hasOpenModal) {
@@ -126,6 +133,8 @@ export default function App() {
     isDeleteModalOpen,
     isClearAllModalOpen,
     isTourOpen,
+    isCalculatorOpen,
+    isMonthlySummaryOpen,
     isCommandPaletteOpen,
   ]);
 
@@ -326,6 +335,63 @@ export default function App() {
     }
   };
 
+  // Bulk Operations
+  const handleBulkUpdateStatus = async (ids: string[], newStatus: PaymentStatus) => {
+    if (!user || ids.length === 0) return;
+    const subcollectionPath = `users/${user.uid}/earnings`;
+    try {
+      const nowIso = new Date().toISOString();
+      await Promise.all(
+        ids.map((id) =>
+          updateDoc(doc(db, 'users', user.uid, 'earnings', id), {
+            paymentStatus: newStatus,
+            updatedAt: nowIso,
+          })
+        )
+      );
+      success(`Updated ${ids.length} transaction${ids.length > 1 ? 's' : ''} to ${newStatus}.`);
+    } catch (err: unknown) {
+      console.error('Failed to bulk update status:', err);
+      handleFirestoreError(err, OperationType.UPDATE, subcollectionPath);
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    if (!user || ids.length === 0) return;
+    const subcollectionPath = `users/${user.uid}/earnings`;
+    try {
+      await Promise.all(
+        ids.map((id) => deleteDoc(doc(db, 'users', user.uid, 'earnings', id)))
+      );
+      success(`Deleted ${ids.length} transaction${ids.length > 1 ? 's' : ''} successfully.`);
+    } catch (err: unknown) {
+      console.error('Failed to bulk delete:', err);
+      handleFirestoreError(err, OperationType.DELETE, subcollectionPath);
+    }
+  };
+
+  const handleApplyCalculatedEarning = (data: {
+    grossAmount: number;
+    deductions: number;
+    category: string;
+    notes: string;
+  }) => {
+    setActiveEarning({
+      id: '',
+      userId: user?.uid || '',
+      date: getTodayISO(),
+      grossAmount: data.grossAmount,
+      deductions: data.deductions,
+      netAmount: Math.round((data.grossAmount - data.deductions) * 100) / 100,
+      category: data.category,
+      paymentStatus: 'Received',
+      paymentMethod: 'Bank Transfer',
+      notes: data.notes,
+    });
+    setEarningModalMode('create');
+    setIsEarningModalOpen(true);
+  };
+
   // 404 Route Handler
   if (isNotFound) {
     return (
@@ -342,9 +408,30 @@ export default function App() {
   // Auth Loading View
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-4">
-        <div className="w-9 h-9 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-medium tracking-wide">Connecting to secure ledger...</p>
+      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center text-slate-300 gap-6 relative overflow-hidden">
+        {/* Dynamic Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.1),transparent_70%)]" />
+        
+        <div className="relative">
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute -inset-4 bg-blue-500/20 blur-2xl rounded-full"
+          />
+          <div className="w-12 h-12 border-2 border-blue-400 border-t-transparent rounded-full animate-spin relative z-10" />
+        </div>
+        
+        <div className="flex flex-col items-center gap-2 relative z-10">
+          <p className="text-sm font-bold tracking-[0.2em] text-blue-400 uppercase">ProfitTrack</p>
+          <p className="text-[10px] font-medium tracking-wider text-slate-500 uppercase">Synchronizing Ledger...</p>
+        </div>
       </div>
     );
   }
@@ -354,138 +441,166 @@ export default function App() {
     return <LoginScreen />;
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
-      {/* 1. Left Fixed Sidebar (Desktop) + Off-Canvas Mobile Drawer */}
-      <Sidebar
+return (
+  <div className="min-h-screen bg-[var(--app-bg)] text-slate-100 flex flex-col selection:bg-blue-900 selection:text-white relative overflow-x-hidden">
+    {/* ProfitTrack Midnight Blue Canvas */}
+    <div className="fixed inset-0 pointer-events-none -z-10 bg-[var(--app-bg)] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(37,99,235,0.16),rgba(8,15,36,0))]">
+      {/* Subtle hairline blue top accent */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent" />
+    </div>
+
+    {/* 1. Left Fixed Sidebar (Desktop) + Off-Canvas Mobile Drawer */}
+    <Sidebar
+      currentTab={activeTab}
+      onTabChange={setActiveTab}
+      onOpenNewEarningModal={() => {
+        setActiveEarning(null);
+        setEarningModalMode('create');
+        setIsEarningModalOpen(true);
+      }}
+      onOpenTour={() => setIsTourOpen(true)}
+      ledgerCount={earnings.length}
+      monthlyGoal={monthlyGoal}
+      currentMonthNet={currentMonthNet}
+      isOpenMobile={isMobileSidebarOpen}
+      onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      onOpenCalculator={() => setIsCalculatorOpen(true)}
+      onOpenMonthlySummary={() => setIsMonthlySummaryOpen(true)}
+    />
+
+    {/* 2. Main Content Canvas (Padded Left for Desktop Sidebar) */}
+    <div className="lg:pl-64 flex flex-col flex-1 min-w-0">
+      {/* Top Header Bar */}
+      <TopHeader
         currentTab={activeTab}
         onTabChange={setActiveTab}
+        onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenNewEarningModal={() => {
           setActiveEarning(null);
           setEarningModalMode('create');
           setIsEarningModalOpen(true);
         }}
         onOpenTour={() => setIsTourOpen(true)}
-        ledgerCount={earnings.length}
-        monthlyGoal={monthlyGoal}
-        currentMonthNet={currentMonthNet}
-        isOpenMobile={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onOpenCalculator={() => setIsCalculatorOpen(true)}
+        onOpenMonthlySummary={() => setIsMonthlySummaryOpen(true)}
       />
 
-      {/* 2. Main Content Canvas (Padded Left for Desktop Sidebar) */}
-      <div className="lg:pl-64 flex flex-col flex-1 min-w-0">
-        {/* Top Header Bar */}
-        <TopHeader
-          currentTab={activeTab}
-          onTabChange={setActiveTab}
-          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-          onOpenNewEarningModal={() => {
-            setActiveEarning(null);
-            setEarningModalMode('create');
-            setIsEarningModalOpen(true);
-          }}
-          onOpenTour={() => setIsTourOpen(true)}
-        />
+      {/* View Content Canvas */}
+      <main className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12 lg:pb-8 flex-1 space-y-6 overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            {activeTab === 'overview' && (
+              <OverviewView
+                earnings={earnings}
+                filteredEarnings={filteredEarnings}
+                filters={filters}
+                onNavigateToLedger={() => setActiveTab('ledger')}
+                onNavigateToAnalytics={() => setActiveTab('analytics')}
+                onNavigateToGoals={() => setActiveTab('goals')}
+                onNavigateToSettings={() => setActiveTab('settings')}
+                onOpenNewEarningModal={() => {
+                  setActiveEarning(null);
+                  setEarningModalMode('create');
+                  setIsEarningModalOpen(true);
+                }}
+                onViewEarning={(item) => {
+                  setEarningToView(item);
+                  setIsDetailModalOpen(true);
+                }}
+                onEditEarning={(item) => {
+                  setActiveEarning(item);
+                  setEarningModalMode('edit');
+                  setIsEarningModalOpen(true);
+                }}
+                onDeleteEarning={(item) => {
+                  setEarningToDelete(item);
+                  setIsDeleteModalOpen(true);
+                }}
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onOpenMonthlySummary={() => setIsMonthlySummaryOpen(true)}
+              />
+            )}
 
-        {/* View Content Canvas */}
-        <main className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12 lg:pb-8 flex-1 space-y-6">
-          {activeTab === 'overview' && (
-            <OverviewView
-              earnings={earnings}
-              filteredEarnings={filteredEarnings}
-              filters={filters}
-              onNavigateToLedger={() => setActiveTab('ledger')}
-              onNavigateToAnalytics={() => setActiveTab('analytics')}
-              onOpenNewEarningModal={() => {
-                setActiveEarning(null);
-                setEarningModalMode('create');
-                setIsEarningModalOpen(true);
-              }}
-              onViewEarning={(item) => {
-                setEarningToView(item);
-                setIsDetailModalOpen(true);
-              }}
-              onEditEarning={(item) => {
-                setActiveEarning(item);
-                setEarningModalMode('edit');
-                setIsEarningModalOpen(true);
-              }}
-              onDeleteEarning={(item) => {
-                setEarningToDelete(item);
-                setIsDeleteModalOpen(true);
-              }}
-            />
-          )}
+            {activeTab === 'ledger' && (
+              <LedgerView
+                earnings={earnings}
+                filteredEarnings={filteredEarnings}
+                filters={filters}
+                onFilterChange={setFilters}
+                categories={availableCategories}
+                paymentMethods={availablePaymentMethods}
+                onView={(item) => {
+                  setEarningToView(item);
+                  setIsDetailModalOpen(true);
+                }}
+                onEdit={(item) => {
+                  setActiveEarning(item);
+                  setEarningModalMode('edit');
+                  setIsEarningModalOpen(true);
+                }}
+                onDuplicate={(item) => {
+                  setActiveEarning(item);
+                  setEarningModalMode('duplicate');
+                  setIsEarningModalOpen(true);
+                }}
+                onDelete={(item) => {
+                  setEarningToDelete(item);
+                  setIsDeleteModalOpen(true);
+                }}
+                onNew={() => {
+                  setActiveEarning(null);
+                  setEarningModalMode('create');
+                  setIsEarningModalOpen(true);
+                }}
+                onBulkUpdateStatus={handleBulkUpdateStatus}
+                onBulkDelete={handleBulkDelete}
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onOpenMonthlySummary={() => setIsMonthlySummaryOpen(true)}
+              />
+            )}
 
-          {activeTab === 'ledger' && (
-            <LedgerView
-              earnings={earnings}
-              filteredEarnings={filteredEarnings}
-              filters={filters}
-              onFilterChange={setFilters}
-              categories={availableCategories}
-              paymentMethods={availablePaymentMethods}
-              onView={(item) => {
-                setEarningToView(item);
-                setIsDetailModalOpen(true);
-              }}
-              onEdit={(item) => {
-                setActiveEarning(item);
-                setEarningModalMode('edit');
-                setIsEarningModalOpen(true);
-              }}
-              onDuplicate={(item) => {
-                setActiveEarning(item);
-                setEarningModalMode('duplicate');
-                setIsEarningModalOpen(true);
-              }}
-              onDelete={(item) => {
-                setEarningToDelete(item);
-                setIsDeleteModalOpen(true);
-              }}
-              onNew={() => {
-                setActiveEarning(null);
-                setEarningModalMode('create');
-                setIsEarningModalOpen(true);
-              }}
-            />
-          )}
+            {activeTab === 'analytics' && (
+              <AnalyticsView
+                earnings={earnings}
+                filteredEarnings={filteredEarnings}
+                filters={filters}
+                onFilterChange={setFilters}
+                categories={availableCategories}
+                paymentMethods={availablePaymentMethods}
+              />
+            )}
 
-          {activeTab === 'analytics' && (
-            <AnalyticsView
-              earnings={earnings}
-              filteredEarnings={filteredEarnings}
-              filters={filters}
-              onFilterChange={setFilters}
-              categories={availableCategories}
-              paymentMethods={availablePaymentMethods}
-            />
-          )}
+            {activeTab === 'goals' && <GoalsView earnings={earnings} />}
 
-          {activeTab === 'goals' && <GoalsView earnings={earnings} />}
+            {activeTab === 'settings' && (
+              <SettingsView
+                earnings={earnings}
+                earningsCount={earnings.length}
+                onOpenClearAllModal={() => setIsClearAllModalOpen(true)}
+                onOpenTour={() => setIsTourOpen(true)}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
-          {activeTab === 'settings' && (
-            <SettingsView
-              earnings={earnings}
-              earningsCount={earnings.length}
-              onOpenClearAllModal={() => setIsClearAllModalOpen(true)}
-              onOpenTour={() => setIsTourOpen(true)}
-            />
-          )}
-        </main>
-
-        {/* Quiet Editorial Footer */}
-        <footer className="border-t border-slate-900 bg-slate-950 py-5 text-xs text-slate-500">
+      {/* Quiet Editorial Footer */}
+        <footer className="border-t border-blue-500/15 bg-[var(--app-bg)]/95 backdrop-blur-xl py-5 text-xs text-slate-400">
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span>rishi Jha · Professional GST and TDS Accountant</span>
+            <span className="font-semibold text-slate-300">rishi Jha · Professional GST and TDS Accountant</span>
             <div className="flex items-center gap-3">
-              <span>Google OAuth Verified</span>
-              <span className="text-slate-700">·</span>
+              <span className="text-blue-400">Google OAuth Verified</span>
+              <span className="text-blue-500/30">·</span>
               <button
                 onClick={() => setIsTourOpen(true)}
-                className="hover:text-slate-300 transition-colors cursor-pointer"
+                className="hover:text-blue-300 transition-colors cursor-pointer"
               >
                 Product Tour
               </button>
@@ -506,6 +621,8 @@ export default function App() {
         }}
         onExportCSV={() => exportEarningsToCSV(filteredEarnings, currency)}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenCalculator={() => setIsCalculatorOpen(true)}
+        onOpenMonthlySummary={() => setIsMonthlySummaryOpen(true)}
       />
 
       <EarningModal
@@ -519,6 +636,7 @@ export default function App() {
         initialData={activeEarning}
         mode={earningModalMode}
         existingCategories={availableCategories}
+        onOpenCalculator={() => setIsCalculatorOpen(true)}
       />
 
       <DeleteConfirmModal
@@ -568,6 +686,18 @@ export default function App() {
           setEarningModalMode('create');
           setIsEarningModalOpen(true);
         }}
+      />
+
+      <GstTdsCalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        onApplyToEarning={handleApplyCalculatedEarning}
+      />
+
+      <MonthlySummaryModal
+        isOpen={isMonthlySummaryOpen}
+        onClose={() => setIsMonthlySummaryOpen(false)}
+        earnings={earnings}
       />
     </div>
   );

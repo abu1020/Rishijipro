@@ -49,6 +49,8 @@ export type DatePreset =
   | 'this_week'
   | 'this_month'
   | 'last_month'
+  | 'current_fy'
+  | 'last_fy'
   | 'this_year'
   | 'all_time'
   | 'custom';

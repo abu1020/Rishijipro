@@ -49,32 +49,32 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Toast Render Container */}
       <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full px-4 pointer-events-none">
         {toasts.map((toast) => {
-          let bgColor = 'bg-slate-900 border-slate-700 text-slate-100';
+          let bgColor = 'bg-[#0d1836] border-blue-500/30 text-slate-100 shadow-2xl shadow-blue-950/60';
           let icon = <Info className="w-5 h-5 text-blue-400 shrink-0" />;
 
           if (toast.type === 'success') {
-            bgColor = 'bg-emerald-950/90 border-emerald-500/40 text-emerald-100 shadow-emerald-950/50';
+            bgColor = 'bg-[#0a1e28] border-emerald-500/40 text-emerald-100 shadow-2xl shadow-emerald-950/50';
             icon = <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />;
           } else if (toast.type === 'error') {
-            bgColor = 'bg-rose-950/90 border-rose-500/40 text-rose-100 shadow-rose-950/50';
+            bgColor = 'bg-[#220d1c] border-rose-500/40 text-rose-100 shadow-2xl shadow-rose-950/50';
             icon = <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />;
           } else if (toast.type === 'warning') {
-            bgColor = 'bg-amber-950/90 border-amber-500/40 text-amber-100 shadow-amber-950/50';
+            bgColor = 'bg-[#251808] border-amber-500/40 text-amber-100 shadow-2xl shadow-amber-950/50';
             icon = <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />;
           }
 
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 ${bgColor}`}
+              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 ${bgColor}`}
             >
               {icon}
-              <div className="flex-1 text-sm font-medium leading-relaxed break-words">
+              <div className="flex-1 text-xs font-semibold leading-relaxed break-words">
                 {toast.message}
               </div>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-white transition-colors p-0.5 rounded-md focus:outline-none"
+                className="text-slate-400 hover:text-white transition-colors p-0.5 rounded-md focus:outline-none cursor-pointer"
                 aria-label="Dismiss toast"
               >
                 <X className="w-4 h-4" />

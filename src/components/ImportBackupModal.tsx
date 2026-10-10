@@ -187,23 +187,26 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-xl liquid-glass-elevated border-white/20 rounded-3xl p-6 sm:p-7 shadow-2xl overflow-hidden">
+        {/* Specular Highlight Rim */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-              <Database className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl liquid-glass-emerald text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Database className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white tracking-tight">Import Database Backup</h3>
-              <p className="text-xs text-slate-400">Restore your records directly into Firebase</p>
+              <p className="text-xs text-slate-300">Restore your records directly into Firebase</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-xl liquid-glass-button text-slate-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -215,7 +218,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              className="border-2 border-dashed border-slate-700 hover:border-emerald-500/60 rounded-2xl p-8 text-center transition-all bg-slate-950/60 cursor-pointer group"
+              className="border-2 border-dashed border-white/20 hover:border-emerald-400/60 rounded-2xl p-8 text-center transition-all liquid-glass-subtle cursor-pointer group"
             >
               <input
                 type="file"
@@ -225,7 +228,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                 id="backup-file-upload"
               />
               <label htmlFor="backup-file-upload" className="cursor-pointer block space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 mx-auto flex items-center justify-center transition-colors">
+                <div className="w-12 h-12 rounded-2xl liquid-glass-subtle text-slate-400 group-hover:text-emerald-400 mx-auto flex items-center justify-center transition-colors">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <div>
@@ -241,7 +244,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
           )}
 
           {parseError && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-3">
+            <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-3 backdrop-blur-md">
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="block font-semibold text-rose-200">Invalid Backup File</strong>
@@ -253,7 +256,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
           {file && parsedRecords.length > 0 && (
             <div className="space-y-4">
               {/* File details card */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="p-4 rounded-2xl liquid-glass-subtle flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                   <FileCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                   <div className="min-w-0">
@@ -279,14 +282,14 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
 
               {/* Summary Metrics */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Gross in Backup</span>
+                <div className="p-3 rounded-xl liquid-glass-subtle text-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Gross in Backup</span>
                   <span className="text-sm font-bold font-mono text-white mt-0.5 block">
                     {formatCurrency(totalGross, currency)}
                   </span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Net in Backup</span>
+                <div className="p-3 rounded-xl liquid-glass-subtle text-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Net in Backup</span>
                   <span className="text-sm font-bold font-mono text-emerald-400 mt-0.5 block">
                     {formatCurrency(totalNet, currency)}
                   </span>
@@ -303,17 +306,17 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                     type="button"
                     onClick={() => setImportMode('append')}
                     disabled={isProcessing}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer backdrop-blur-md ${
                       importMode === 'append'
-                        ? 'bg-emerald-500/15 border-emerald-500/50 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-blue-600/25 border-blue-400 text-white shadow-lg shadow-blue-500/20'
+                        : 'liquid-glass-subtle text-slate-400 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center gap-2 font-bold text-xs text-white">
                       <Layers className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Append / Merge</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1">
+                    <span className="text-[10px] text-slate-300 mt-1">
                       Add to existing {currentCount} records without deleting anything.
                     </span>
                   </button>
@@ -322,17 +325,17 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
                     type="button"
                     onClick={() => setImportMode('replace')}
                     disabled={isProcessing}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer backdrop-blur-md ${
                       importMode === 'replace'
-                        ? 'bg-rose-500/15 border-rose-500/50 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-rose-500/20 border-rose-500/50 text-white shadow-lg shadow-rose-500/10'
+                        : 'liquid-glass-subtle text-slate-400 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center gap-2 font-bold text-xs text-rose-300">
                       <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                       <span>Replace All</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1">
+                    <span className="text-[10px] text-slate-300 mt-1">
                       Clear current {currentCount} records, then restore backup cleanly.
                     </span>
                   </button>
@@ -341,7 +344,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
 
               {/* Progress Indicator */}
               {isProcessing && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="p-3 rounded-xl liquid-glass-subtle space-y-2">
                   <div className="flex items-center justify-between text-xs text-slate-300">
                     <span className="flex items-center gap-2 font-medium">
                       <RefreshCw className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
@@ -366,12 +369,12 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+        <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isProcessing}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
@@ -380,7 +383,7 @@ export const ImportBackupModal: React.FC<ImportBackupModalProps> = ({
             type="button"
             onClick={handleExecuteImport}
             disabled={isProcessing || parsedRecords.length === 0}
-            className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl liquid-glass-emerald hover:brightness-110 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isProcessing ? (
               <>

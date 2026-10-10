@@ -56,6 +56,24 @@ export function getPresetDateRange(preset: string): { startDate: string; endDate
       };
     }
 
+    case 'current_fy': {
+      // Indian Financial Year: April 1 to March 31
+      const nowYear = now.getFullYear();
+      const nowMonth = now.getMonth(); // 0 = Jan, 3 = Apr
+      const fyStartYear = nowMonth >= 3 ? nowYear : nowYear - 1;
+      const startStr = `${fyStartYear}-04-01`;
+      return { startDate: startStr, endDate: todayStr };
+    }
+
+    case 'last_fy': {
+      const nowYear = now.getFullYear();
+      const nowMonth = now.getMonth();
+      const fyStartYear = (nowMonth >= 3 ? nowYear : nowYear - 1) - 1;
+      const startStr = `${fyStartYear}-04-01`;
+      const endStr = `${fyStartYear + 1}-03-31`;
+      return { startDate: startStr, endDate: endStr };
+    }
+
     case 'this_year': {
       const firstDayYear = new Date(now.getFullYear(), 0, 1);
       return { startDate: formatDateToISO(firstDayYear), endDate: todayStr };

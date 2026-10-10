@@ -3,10 +3,8 @@ import {
   FileQuestion,
   Home,
   ArrowLeft,
-  ShieldCheck,
-  Compass,
-  FileSpreadsheet,
 } from 'lucide-react';
+import { hapticPress, hapticTap } from '../utils/haptics';
 
 interface NotFoundPageProps {
   onGoHome: () => void;
@@ -14,56 +12,52 @@ interface NotFoundPageProps {
 
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onGoHome }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-7 sm:p-8 shadow-2xl text-center space-y-6 relative overflow-hidden animate-fadeIn">
-        {/* Background ambient glow */}
-        <div className="absolute -top-16 -left-16 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#080f24] text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-blue-900 selection:text-white relative">
+      {/* Ambient Radial Blue Glow */}
+      <div className="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_70%_50%_at_50%_40%,rgba(37,99,235,0.14),transparent)]" />
 
-        {/* 404 Badge & Icon */}
-        <div className="mx-auto w-16 h-16 rounded-3xl bg-slate-800/90 border border-slate-700/80 text-emerald-400 flex items-center justify-center shadow-inner">
-          <FileQuestion className="w-8 h-8" />
+      <div className="max-w-md w-full bg-[#0d1630] border border-blue-500/20 rounded-2xl p-7 sm:p-8 shadow-2xl text-center space-y-5 animate-fadeIn shadow-blue-950/50">
+        {/* 404 Icon */}
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-[#101c3d] text-blue-400 border border-blue-500/25 flex items-center justify-center shadow-inner">
+          <FileQuestion className="w-7 h-7" />
         </div>
 
         {/* Title & Copy */}
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
-            Error 404 · Unrecorded Route
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">
+        <div className="space-y-1.5">
+          <span className="text-[11px] text-blue-400 font-mono uppercase tracking-wider font-bold">
+            Status 404 · Unrecognized Route
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
             Page Not Found
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            The ledger path or financial view you requested does not exist or has been relocated.
+          <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
+            The ledger ledger view or destination requested does not exist or has been relocated within the financial workspace.
           </p>
         </div>
 
         {/* Navigation Actions */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
           <button
-            onClick={onGoHome}
-            className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => {
+              hapticPress();
+              onGoHome();
+            }}
+            className="w-full sm:w-auto flex-1 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 border border-white tactile-btn shadow-sm"
           >
             <Home className="w-4 h-4 stroke-[2.5]" />
-            <span>Return to Dashboard</span>
+            <span>Return to Workspace</span>
           </button>
 
           <button
-            onClick={() => window.history.back()}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => {
+              hapticTap();
+              window.history.back();
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#111e40] hover:bg-[#182955] text-slate-200 text-xs font-semibold border border-blue-500/20 transition-colors cursor-pointer flex items-center justify-center gap-2 tactile-btn"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Go Back</span>
           </button>
-        </div>
-
-        {/* Security watermark */}
-        <div className="pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>rishi Jha · Professional GST and TDS Accountant</span>
-          </span>
-          <span className="font-mono text-[10px]">404_NOT_FOUND</span>
         </div>
       </div>
     </div>

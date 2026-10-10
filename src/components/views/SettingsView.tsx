@@ -8,22 +8,30 @@ import { exportDatabaseBackupJSON, exportEarningsToCSV } from '../../utils/forma
 import { ImportBackupModal } from '../ImportBackupModal';
 import {
   Settings,
-  ShieldCheck,
   User,
   Coins,
   Check,
-  LogOut,
   Trash2,
   RotateCcw,
   Edit2,
-  Calendar,
   Database,
   Download,
   UploadCloud,
   FileSpreadsheet,
-  FileCheck,
+  Vibrate,
   Sparkles,
 } from 'lucide-react';
+import {
+  getHapticConfig,
+  setHapticConfig,
+  triggerHaptic,
+  hapticTap,
+  hapticPress,
+  hapticSuccess,
+  hapticWarning,
+  hapticSelect,
+  HapticType,
+} from '../../utils/haptics';
 
 interface SettingsViewProps {
   earnings: Earning[];
@@ -38,7 +46,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onOpenClearAllModal,
   onOpenTour,
 }) => {
-  const { user, userProfile, currency, setCurrency, monthlyGoal, setMonthlyGoal, logout } =
+  const { user, userProfile, currency, setCurrency, monthlyGoal, setMonthlyGoal } =
     useAuth();
   const { success, error, info } = useToast();
 
@@ -49,23 +57,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  // Haptic configuration state
+  const [hapticState, setHapticState] = useState(getHapticConfig());
+
+  const handleUpdateHaptic = (updates: Partial<typeof hapticState>) => {
+    const updated = setHapticConfig(updates);
+    setHapticState(updated);
+    triggerHaptic('medium');
+    success('Haptic settings updated.');
+  };
+
+  const handleTestHaptic = (type: HapticType, label: string) => {
+    triggerHaptic(type);
+    info(`Haptic impulse triggered: ${label}`);
+  };
+
   const handleUpdateGoal = async (e: React.FormEvent) => {
     e.preventDefault();
+    hapticPress();
     const val = parseFloat(goalInput);
     if (!isNaN(val) && val > 0) {
       await setMonthlyGoal(val);
+      hapticSuccess();
       success('Monthly goal updated.');
     }
   };
 
   const handleResetGoal = async () => {
+    hapticPress();
     await setMonthlyGoal(100000);
     setGoalInput('100000');
-    success('Monthly goal reset to default ₹1,00,000.');
+    hapticSuccess();
+    success('Monthly goal reset to ₹1,00,000.');
   };
 
   const handleUpdateDisplayName = async (e: React.FormEvent) => {
     e.preventDefault();
+    hapticPress();
     if (!user) return;
     if (!displayNameInput.trim()) {
       error('Display name cannot be empty.');
@@ -79,6 +107,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         displayName: displayNameInput.trim(),
         updatedAt: new Date().toISOString(),
       });
+      hapticSuccess();
       success('Profile display name updated successfully.');
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
@@ -88,80 +117,210 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleExportJSON = () => {
+    hapticPress();
     if (earnings.length === 0) {
       info('Your ledger is currently empty. Add transactions first to export data.');
       return;
     }
     exportDatabaseBackupJSON(earnings, user?.email || '', currency);
-    success(`Exported ${earnings.length} records as a Firebase JSON backup!`);
+    hapticSuccess();
+    success(`Exported ${earnings.length} records as a JSON backup!`);
   };
 
   const handleExportCSV = () => {
+    hapticPress();
     if (earnings.length === 0) {
       info('Your ledger is currently empty. Add transactions first to export CSV.');
       return;
     }
     exportEarningsToCSV(earnings, currency);
+    hapticSuccess();
     success(`Exported ${earnings.length} records to CSV spreadsheet!`);
   };
 
+  const panelClass = 'bg-[#0d1630] border border-blue-500/20 text-slate-100 shadow-sm';
+  const sectionDivider = 'border-blue-500/15';
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-fadeIn pb-10">
+    <div className="space-y-5 max-w-4xl mx-auto animate-fadeIn pb-12">
       {/* Top Banner */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className={`border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${panelClass}`}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 text-emerald-400 flex items-center justify-center">
-            <Settings className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold bg-blue-900/50 text-blue-300 border border-blue-400/20">
+            <Settings className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-              Account, Database & System Settings
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+              Account & Application Settings
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Manage your currency, goals, Firebase backups, data portability, and profile
+            <p className="text-xs mt-0.5 text-slate-400">
+              Midnight blue suite, tactile haptics, accounting currency, and database portability
             </p>
           </div>
         </div>
 
         <button
-          onClick={onOpenTour}
-          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer self-start sm:self-auto"
+          onClick={() => {
+            hapticTap();
+            onOpenTour();
+          }}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-500/20 bg-[#111e40] hover:bg-[#182955] text-slate-200 hover:text-white transition-all cursor-pointer self-start sm:self-auto tactile-btn"
         >
           Product Tour
         </button>
       </div>
 
-      {/* Profile & Display Name */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-          <User className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-bold text-white tracking-tight">User Profile Information</h3>
+      {/* 1. Tactile Haptic Feel Engine */}
+      <div className={`border rounded-xl p-5 space-y-4 transition-colors ${panelClass}`}>
+        <div className={`flex items-center justify-between pb-2.5 border-b ${sectionDivider}`}>
+          <div className="flex items-center gap-2">
+            <Vibrate className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+              Tactile & Physical Haptic Feedback
+            </h3>
+          </div>
+          <span className="text-[11px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            Hardware & Audio Impulses
+          </span>
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-400">
+          Simulates authentic physical mechanical switches and hardware vibration. Tapping buttons, tabs, presets, and checkboxes triggers native device vibration and subtle acoustic click impulses.
+        </p>
+
+        {/* Toggle Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Hardware Vibration Toggle */}
+          <div className="p-3.5 rounded-lg border bg-[#0e1935] border-blue-500/15 flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold text-white">
+                Hardware Vibration
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Physical pulse via navigator.vibrate on mobile & trackpads
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleUpdateHaptic({ vibration: !hapticState.vibration })}
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer tactile-btn ${
+                hapticState.vibration ? 'bg-emerald-500' : 'bg-slate-700'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white shadow-xs absolute top-1 transition-transform ${
+                  hapticState.vibration ? 'left-6' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Synthesized Micro-Click Sound */}
+          <div className="p-3.5 rounded-lg border bg-[#0e1935] border-blue-500/15 flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold text-white">
+                Tactile Audio Impulse
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Crisp mechanical switch / crown click micro-pulse
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleUpdateHaptic({ sound: !hapticState.sound })}
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer tactile-btn ${
+                hapticState.sound ? 'bg-emerald-500' : 'bg-slate-700'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white shadow-xs absolute top-1 transition-transform ${
+                  hapticState.sound ? 'left-6' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Live Interactive Test Palette */}
+        <div className="pt-2">
+          <div className="text-xs font-bold mb-2 text-slate-200">
+            Feel Haptic Sensations (Tap buttons below to test impulse):
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => handleTestHaptic('light', 'Light Tap (12ms)')}
+              className="p-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer tactile-btn text-center bg-[#111e40] hover:bg-[#182955] border-blue-500/20 text-slate-200 hover:text-white"
+            >
+              Light Tap (Tabs)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTestHaptic('medium', 'Button Press (24ms)')}
+              className="p-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer tactile-btn text-center bg-[#111e40] hover:bg-[#182955] border-blue-500/20 text-slate-200 hover:text-white"
+            >
+              Medium Tap (CTA)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTestHaptic('success', 'Success Double-Tick')}
+              className="p-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer tactile-btn text-center text-emerald-400 bg-emerald-950/40 hover:bg-emerald-950/80 border-emerald-500/30"
+            >
+              Success Pulse
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTestHaptic('warning', 'Warning Alert')}
+              className="p-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer tactile-btn text-center text-amber-400 bg-amber-950/40 hover:bg-amber-950/80 border-amber-500/30"
+            >
+              Warning Alert
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Profile & Display Name */}
+      <div className={`border rounded-xl p-5 space-y-3.5 transition-colors ${panelClass}`}>
+        <div className={`flex items-center gap-2 pb-2.5 border-b ${sectionDivider}`}>
+          <User className="w-4 h-4 text-blue-400" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            Profile Information
+          </h3>
         </div>
 
         <form onSubmit={handleUpdateDisplayName} className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Display Name (Editable)
+              <label className="block text-xs font-bold mb-1 text-slate-300">
+                Display Name
               </label>
               <input
                 type="text"
                 value={displayNameInput}
                 onChange={(e) => setDisplayNameInput(e.target.value)}
                 maxLength={80}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-emerald-500 focus:outline-none"
-                placeholder="Your Name or Studio Name"
+                className="w-full px-3 py-1.5 rounded-lg border text-xs focus:outline-none bg-[#091126] border-blue-500/20 text-white focus:border-blue-400/50"
+                placeholder="Your Name"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                Google Email Address
+              <label className="block text-xs font-medium mb-1 text-slate-400">
+                Google Account Email
               </label>
               <input
                 type="text"
                 disabled
                 value={user?.email || ''}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800/60 text-slate-400 text-xs cursor-not-allowed"
+                className="w-full px-3 py-1.5 rounded-lg border text-xs cursor-not-allowed bg-[#080d1a] border-blue-500/10 text-slate-500"
               />
             </div>
           </div>
@@ -170,117 +329,133 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="submit"
               disabled={isUpdatingName}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs bg-white hover:bg-blue-50 text-slate-950 shadow-sm border border-white transition-all cursor-pointer disabled:opacity-50 tactile-btn"
             >
-              <Edit2 className="w-3.5 h-3.5" />
-              <span>{isUpdatingName ? 'Saving...' : 'Update Display Name'}</span>
+              <Edit2 className="w-3 h-3" />
+              <span>{isUpdatingName ? 'Saving...' : 'Update Name'}</span>
             </button>
           </div>
         </form>
       </div>
 
-      {/* Currency Settings */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-          <Coins className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-bold text-white tracking-tight">Display Currency (Default: ₹ INR)</h3>
+      {/* 3. Accounting Currency */}
+      <div className={`border rounded-xl p-5 space-y-3 transition-colors ${panelClass}`}>
+        <div className={`flex items-center gap-2 pb-2.5 border-b ${sectionDivider}`}>
+          <Coins className="w-4 h-4 text-blue-400" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            Accounting Currency
+          </h3>
         </div>
         <p className="text-xs text-slate-400">
-          Select your primary accounting currency. Real-time exchange symbols format instantly across the entire ledger.
+          Select primary currency for ledger, PDF reports, and calculations.
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
           {SUPPORTED_CURRENCIES.map((c) => {
             const isSelected = currency === c.code;
             return (
               <button
                 key={c.code}
-                onClick={() => setCurrency(c.code)}
-                className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                onClick={() => {
+                  hapticSelect();
+                  setCurrency(c.code);
+                }}
+                className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all cursor-pointer tactile-btn ${
                   isSelected
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-white shadow-sm'
-                    : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'bg-white border-white text-slate-950 font-bold shadow-xs'
+                    : 'bg-[#0e1935] border-blue-500/15 text-slate-300 hover:bg-[#142247] hover:border-blue-400/40 hover:text-white'
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-base font-bold text-emerald-400">{c.symbol}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-mono text-sm font-bold">{c.symbol}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </div>
-                <div className="text-xs font-semibold text-white">{c.code}</div>
-                <div className="text-[10px] text-slate-500 truncate">{c.name}</div>
+                <div className="text-xs font-semibold">{c.code}</div>
+                <div
+                  className={`text-[10px] truncate ${
+                    isSelected ? 'text-slate-600 font-medium' : 'text-slate-400'
+                  }`}
+                >
+                  {c.name}
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Target Monthly Goal Setting */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-          <Settings className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-bold text-white tracking-tight">Monthly Net Goal Target</h3>
+      {/* 4. Target Monthly Goal Setting */}
+      <div className={`border rounded-xl p-5 space-y-3 transition-colors ${panelClass}`}>
+        <div className={`flex items-center gap-2 pb-2.5 border-b ${sectionDivider}`}>
+          <Settings className="w-4 h-4 text-blue-400" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            Monthly Net Goal Target
+          </h3>
         </div>
-        <form onSubmit={handleUpdateGoal} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-lg">
+        <form
+          onSubmit={handleUpdateGoal}
+          className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 max-w-md"
+        >
           <div className="relative flex-1">
             <input
               type="number"
               min="1"
               value={goalInput}
               onChange={(e) => setGoalInput(e.target.value)}
-              className="w-full pl-3 pr-12 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono tabular-nums text-sm focus:border-emerald-500 focus:outline-none"
+              className="w-full pl-3 pr-10 py-1.5 rounded-lg border font-mono tabular-nums text-xs font-bold focus:outline-none bg-[#091126] border-blue-500/20 text-white focus:border-blue-400/50"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 font-bold">
               {currency}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
+              className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-white hover:bg-blue-50 text-slate-950 shadow-sm border border-white transition-all cursor-pointer whitespace-nowrap tactile-btn"
             >
               Update Goal
             </button>
             <button
               type="button"
               onClick={handleResetGoal}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-blue-500/20 bg-[#111e40] hover:bg-[#182955] text-slate-300 hover:text-white transition-colors cursor-pointer tactile-btn"
               title="Reset to default ₹1,00,000"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
         </form>
       </div>
 
-      {/* DATABASE BACKUP, EXPORT & IMPORT (FIREBASE SYSTEM) */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <Database className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-white tracking-tight">
-              Database Backup, Export & Portability
+      {/* 5. Database Backup & Portability */}
+      <div className={`border rounded-xl p-5 space-y-3.5 transition-colors ${panelClass}`}>
+        <div className={`flex items-center justify-between pb-2.5 border-b ${sectionDivider}`}>
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4 text-blue-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Database Backup & Portability
             </h3>
           </div>
-          <span className="text-xs font-mono text-emerald-400 font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+          <span className="text-xs font-mono font-bold text-slate-300">
             {earningsCount} Documents
           </span>
         </div>
 
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Safeguard your entire financial history. Export a full-fidelity JSON database backup file that matches your Firebase Firestore collection structure. If you ever delete or migrate your data, you can restore your complete ledger with one click.
+        <p className="text-xs leading-relaxed text-slate-400">
+          Export full JSON backup files or restore previously exported backups with 1-click.
         </p>
 
         {/* Action Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
           {/* Export Database Card */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <Download className="w-4 h-4 text-emerald-400" />
-                <span>Export Database Backup (JSON)</span>
+          <div className="p-3.5 rounded-lg border bg-[#0e1935] border-blue-500/15 flex flex-col justify-between space-y-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 font-bold text-xs text-white">
+                <Download className="w-3.5 h-3.5 text-blue-400" />
+                <span>Export JSON / CSV Backup</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-normal">
-                Download a complete, structured JSON backup of all {earningsCount} daily records, tax deductions, vouchers, and timestamps.
+              <p className="text-[11px] text-slate-400">
+                Structured backup of all {earningsCount} daily records, tax deductions, and vouchers.
               </p>
             </div>
 
@@ -288,65 +463,73 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 onClick={handleExportJSON}
                 disabled={earningsCount === 0}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-white hover:bg-blue-50 text-slate-950 shadow-sm border border-white transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-1.5 tactile-btn"
               >
-                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Export JSON Backup</span>
+                <Download className="w-3.5 h-3.5" />
+                <span>Export JSON</span>
               </button>
 
               <button
                 onClick={handleExportCSV}
                 disabled={earningsCount === 0}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-40"
+                className="px-2.5 py-1.5 rounded-lg border border-blue-500/20 bg-[#111e40] hover:bg-[#182955] text-slate-200 hover:text-white transition-colors cursor-pointer disabled:opacity-40 tactile-btn"
                 title="Download CSV Spreadsheet"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" />
+                <FileSpreadsheet className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
           {/* Import Database Card */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between space-y-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <UploadCloud className="w-4 h-4 text-cyan-400" />
-                <span>Import Database Backup (JSON)</span>
+          <div className="p-3.5 rounded-lg border bg-[#0e1935] border-blue-500/15 flex flex-col justify-between space-y-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 font-bold text-xs text-white">
+                <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
+                <span>Import JSON Backup</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-normal">
-                Restore records from a previously exported ProfitTrack JSON backup file. Supports clean replace or merge.
+              <p className="text-[11px] text-slate-400">
+                Restore records from a previously exported ProfitTrack JSON backup file.
               </p>
             </div>
 
             <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="w-full px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white border border-slate-700 hover:border-emerald-500/50 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+              onClick={() => {
+                hapticPress();
+                setIsImportModalOpen(true);
+              }}
+              className="w-full px-3 py-1.5 rounded-lg border border-blue-500/20 bg-[#111e40] hover:bg-[#182955] text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 tactile-btn"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Import / Restore Backup</span>
+              <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
+              <span>Restore Backup</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Data Management & Deletable Actions */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
-          <Trash2 className="w-4 h-4 text-rose-400" />
-          <h3 className="text-sm font-bold text-white tracking-tight">Ledger Data Management & Erasure</h3>
+      {/* 6. Danger Zone */}
+      <div className={`border rounded-xl p-5 space-y-3 transition-colors ${panelClass}`}>
+        <div className={`flex items-center gap-2 pb-2.5 border-b ${sectionDivider}`}>
+          <Trash2 className="w-4 h-4 text-rose-500" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500">
+            Ledger Data Erasure
+          </h3>
         </div>
 
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Erase all transactions from your ledger with safety confirmation. Active records in your database: <strong className="text-white font-mono">{earningsCount}</strong>.
+        <p className="text-xs leading-relaxed text-slate-400">
+          Permanently delete all transaction entries from your cloud database.
         </p>
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
+        <div className="pt-1">
           <button
-            onClick={onOpenClearAllModal}
+            onClick={() => {
+              hapticWarning();
+              onOpenClearAllModal();
+            }}
             disabled={earningsCount === 0}
-            className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-bold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40 tactile-btn"
           >
-            <Trash2 className="w-4 h-4" />
-            <span>Permanently Delete All Transactions ({earningsCount})</span>
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete All Records ({earningsCount})</span>
           </button>
         </div>
       </div>

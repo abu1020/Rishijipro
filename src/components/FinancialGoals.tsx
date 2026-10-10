@@ -8,10 +8,9 @@ import {
   Edit3,
   TrendingUp,
   Zap,
-  Check,
   X,
-  Calendar,
 } from 'lucide-react';
+import { hapticTap, hapticPress, hapticSuccess } from '../utils/haptics';
 
 interface FinancialGoalsProps {
   earnings: Earning[];
@@ -52,6 +51,7 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
 
   const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
+    hapticPress();
     const val = parseFloat(goalInput);
     if (isNaN(val) || val < 1) {
       error('Please enter a valid goal amount greater than 0.');
@@ -61,6 +61,7 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
     setIsSavingGoal(true);
     try {
       await setMonthlyGoal(val);
+      hapticSuccess();
       success(`Monthly goal updated to ${formatCurrency(val, currency)}`);
       setIsEditingGoal(false);
     } catch (err: unknown) {
@@ -83,16 +84,16 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
     }
     if (progressPercent >= 75) {
       return (
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
           <span>Final Stretch ({(100 - progressPercent).toFixed(0)}% to target)</span>
         </span>
       );
     }
     if (progressPercent >= 50) {
       return (
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
           <span>Halfway Crossed</span>
         </span>
       );
@@ -106,20 +107,20 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
   };
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 transition-all hover:border-slate-750">
+    <div className="bg-[#0d1630] border border-blue-500/20 rounded-xl p-5 sm:p-6 transition-all shadow-lg shadow-blue-950/30">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-blue-500/15">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700/80 text-emerald-400 flex items-center justify-center">
-            <Target className="w-4 h-4 stroke-[2.5]" />
+          <div className="w-8 h-8 rounded-lg bg-[#101c3d] text-blue-300 border border-blue-500/20 flex items-center justify-center">
+            <Target className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-white tracking-tight">
                 {monthName} Financial Goal
               </h2>
-              <span className="text-slate-600">·</span>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-blue-500/40">·</span>
+              <span className="text-xs text-slate-300 font-mono">
                 {monthName} {currentYear}
               </span>
             </div>
@@ -133,52 +134,52 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
           {getStatusText()}
           <button
             onClick={() => {
+              hapticTap();
               setGoalInput(targetGoal.toString());
               setIsEditingGoal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111e40] hover:bg-[#182955] text-xs font-semibold text-slate-200 hover:text-white border border-blue-500/20 transition-colors cursor-pointer tactile-btn"
           >
-            <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
+            <Edit3 className="w-3.5 h-3.5 text-blue-400" />
             <span>Set Target</span>
           </button>
         </div>
       </div>
 
       {/* Main Metric Row */}
-      <div className="py-5 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+      <div className="py-4 grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
         {/* Metric 1: Realized Net vs Target */}
         <div>
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
             Realized Net Income
           </span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-3xl sm:text-4xl font-bold tracking-tight text-white font-mono tabular-nums">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono tabular-nums">
               {formatCurrency(currentMonthNet, currency)}
             </span>
-            <span className="text-sm font-mono tabular-nums text-slate-500">
+            <span className="text-sm font-mono tabular-nums text-slate-400">
               / {formatCurrency(targetGoal, currency)}
             </span>
           </div>
-          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-1">
+          <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-1 font-mono">
             <span>Gross: {formatCurrency(currentMonthGross, currency)}</span>
-            <span className="text-slate-600">·</span>
+            <span>·</span>
             <span>{currentMonthEarnings.length} records</span>
           </div>
         </div>
 
         {/* Metric 2: Progress Percentage & Progress Bar */}
-        <div className="md:border-x md:border-slate-800/80 md:px-6 space-y-2">
+        <div className="md:border-x md:border-blue-500/15 md:px-5 space-y-1.5">
           <div className="flex justify-between items-center text-xs">
-            <span className="font-semibold text-slate-300">Goal Attainment</span>
-            <span className="font-mono tabular-nums font-bold text-emerald-400 text-sm">
+            <span className="font-semibold text-slate-200">Goal Attainment</span>
+            <span className="font-mono tabular-nums font-bold text-emerald-400">
               {progressPercent.toFixed(1)}%
             </span>
           </div>
 
-          {/* Clean Progress Bar */}
-          <div className="w-full h-2 rounded-full bg-slate-950 border border-slate-800 overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-blue-950/80 border border-blue-500/10 overflow-hidden">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -186,13 +187,10 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
           <div className="flex justify-between items-center text-[11px] text-slate-400">
             <span>
               {isGoalAchieved ? (
-                <span className="text-emerald-400 font-medium">Target Completed</span>
+                <span className="text-emerald-400 font-semibold">Target Completed</span>
               ) : (
                 <span>
-                  Remaining:{' '}
-                  <strong className="text-slate-200 font-mono tabular-nums font-medium">
-                    {formatCurrency(remainingAmount, currency)}
-                  </strong>
+                  Remaining: <strong className="text-white font-mono font-bold">{formatCurrency(remainingAmount, currency)}</strong>
                 </span>
               )}
             </span>
@@ -201,30 +199,30 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
         </div>
 
         {/* Metric 3: Pace & Run Rate */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
-            <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="p-3 rounded-lg bg-[#101c3d] border border-blue-500/15">
+            <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-emerald-400" />
               Current Pace
             </span>
-            <div className="text-base font-bold font-mono tabular-nums text-white mt-1">
+            <div className="text-sm font-bold font-mono tabular-nums text-white mt-1">
               {formatCurrency(currentDailyPace, currency)}
-              <span className="text-[10px] text-slate-500 font-normal">/day</span>
+              <span className="text-[10px] text-slate-400 font-normal">/day</span>
             </div>
-            <span className="text-[10px] text-slate-500">Day {currentDay} of {daysInCurrentMonth}</span>
+            <span className="text-[10px] text-slate-400">Day {currentDay} of {daysInCurrentMonth}</span>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
-            <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+          <div className="p-3 rounded-lg bg-[#101c3d] border border-blue-500/15">
+            <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1">
               <Zap className="w-3 h-3 text-amber-400" />
               Required Pace
             </span>
-            <div className="text-base font-bold font-mono tabular-nums text-amber-400 mt-1">
+            <div className="text-sm font-bold font-mono tabular-nums text-white mt-1">
               {isGoalAchieved ? 'Met' : formatCurrency(requiredDailyPace, currency)}
-              {!isGoalAchieved && <span className="text-[10px] text-slate-500 font-normal">/day</span>}
+              {!isGoalAchieved && <span className="text-[10px] text-slate-400 font-normal">/day</span>}
             </div>
-            <span className="text-[10px] text-slate-500">
-              {isGoalAchieved ? 'Surplus territory' : 'To hit 100%'}
+            <span className="text-[10px] text-slate-400">
+              {isGoalAchieved ? 'Surplus running' : 'To hit 100%'}
             </span>
           </div>
         </div>
@@ -234,18 +232,19 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
       {isEditingGoal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
             onClick={() => setIsEditingGoal(false)}
           />
-          <div className="relative bg-slate-900 border border-slate-700 rounded-2xl p-5 sm:p-6 shadow-2xl max-w-sm w-full z-10 my-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Target className="w-4 h-4 text-emerald-400" />
-                Set Monthly Net Target
-              </h3>
+
+          <div className="relative w-full max-w-sm bg-[#0d1836] border border-blue-500/25 rounded-xl p-5 shadow-2xl z-10 space-y-4 animate-fadeIn shadow-blue-950/60">
+            <div className="flex items-center justify-between pb-3 border-b border-blue-500/15">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-bold text-white">Update Monthly Goal</h3>
+              </div>
               <button
                 onClick={() => setIsEditingGoal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="p-1 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -253,48 +252,35 @@ export const FinancialGoals: React.FC<FinancialGoalsProps> = ({ earnings }) => {
 
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-300 font-semibold mb-1.5">
-                  Target Net Earnings ({currency})
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Monthly Target ({currency})
                 </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    step="5000"
-                    required
-                    value={goalInput}
-                    onChange={(e) => setGoalInput(e.target.value)}
-                    className="w-full pl-3 pr-12 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono tabular-nums text-base font-bold focus:border-emerald-500 focus:outline-none"
-                    autoFocus
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
-                    {currency}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Saved directly to your account preferences.
-                </p>
+                <input
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={goalInput}
+                  onChange={(e) => setGoalInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#091126] border border-blue-500/25 text-white font-mono text-sm focus:outline-none focus:border-blue-400/60"
+                  placeholder="e.g. 100000"
+                  autoFocus
+                />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsEditingGoal(false)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-blue-900/40 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingGoal}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 border border-white"
                 >
-                  {isSavingGoal ? (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  )}
-                  <span>Save Target</span>
+                  {isSavingGoal ? 'Saving...' : 'Save Target'}
                 </button>
               </div>
             </form>

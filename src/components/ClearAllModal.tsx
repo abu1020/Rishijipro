@@ -75,7 +75,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/90 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
         onClick={() => {
           if (!isDeleting) onClose();
         }}
@@ -83,9 +83,12 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
       />
 
       {/* Dialog Card */}
-      <div className="relative bg-slate-900 border border-rose-500/50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-7 z-10 overflow-hidden my-auto max-h-[92vh] animate-fadeIn">
+      <div className="relative liquid-glass-elevated border-rose-500/40 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-7 z-10 overflow-hidden my-auto max-h-[92vh] animate-fadeIn">
+        {/* Specular Highlight Rim */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-rose-400/40 to-transparent pointer-events-none" />
+
         {/* Progress Step Indicator (3 Steps) */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -103,7 +106,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                   ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30'
                   : step > 2
                   ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-slate-800 text-slate-500'
+                  : 'liquid-glass-subtle text-slate-500'
               }`}
             >
               2
@@ -113,7 +116,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                 step === 3
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 animate-pulse'
-                  : 'bg-slate-800 text-slate-500'
+                  : 'liquid-glass-subtle text-slate-500'
               }`}
             >
               3
@@ -127,7 +130,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-xl liquid-glass-button text-slate-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
@@ -137,8 +140,8 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
         {step === 1 && (
           <div className="space-y-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/10">
+                <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white tracking-tight">
@@ -150,11 +153,11 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-slate-300 space-y-2">
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-slate-300 space-y-2 backdrop-blur-md">
               <p className="leading-relaxed">
                 You are about to erase <strong className="text-white font-mono">{count} transactions</strong> from your Firebase cloud ledger.
               </p>
-              <ul className="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+              <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
                 <li>All gross revenues, expenses, and TDS records will be permanently wiped.</li>
                 <li>Monthly goal statistics, pacing metrics, and charts will reset to zero.</li>
                 <li><strong>No backup is stored on our servers — deletion is final and permanent.</strong></li>
@@ -164,7 +167,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
             {/* Verification Method 1: Checkbox Acknowledgment */}
             <div
               onClick={() => setHasAcknowledged(!hasAcknowledged)}
-              className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-start gap-3 select-none"
+              className="p-3.5 rounded-xl liquid-glass-subtle hover:border-white/20 transition-all cursor-pointer flex items-start gap-3 select-none"
             >
               <div className="mt-0.5 text-rose-400 shrink-0">
                 {hasAcknowledged ? (
@@ -184,7 +187,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                 <button
                   type="button"
                   onClick={onDownloadBackup}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-emerald-400 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl liquid-glass-button text-xs font-semibold text-emerald-300 transition-colors cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Backup First</span>
@@ -197,7 +200,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -219,21 +222,21 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
         {step === 2 && (
           <div className="space-y-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
-                <KeyRound className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
+                <KeyRound className="w-6 h-6 stroke-[2.5]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white tracking-tight">
                   Security Confirmation Challenge
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-300 mt-0.5">
                   Confirm intentionality by typing the exact verification phrase below:
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">
+            <div className="p-3.5 rounded-xl liquid-glass-subtle text-center space-y-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">
                 Type the following phrase in uppercase:
               </span>
               <code className="text-sm font-mono font-black text-rose-400 tracking-wider bg-rose-950/40 px-3 py-1 rounded-md border border-rose-500/30 inline-block">
@@ -252,10 +255,10 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                 value={typedVerification}
                 onChange={(e) => setTypedVerification(e.target.value)}
                 placeholder={`Type "${REQUIRED_PHRASE}" here`}
-                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border text-xs font-mono tracking-wider focus:outline-none transition-colors ${
+                className={`w-full px-3.5 py-2.5 rounded-xl liquid-glass-input text-xs font-mono tracking-wider transition-colors ${
                   isPhraseMatch
-                    ? 'border-emerald-500 text-emerald-400 bg-emerald-950/10'
-                    : 'border-slate-800 text-white focus:border-rose-500'
+                    ? 'border-emerald-500 text-emerald-400 bg-emerald-950/20'
+                    : 'text-white focus:border-rose-500'
                 }`}
               />
               {typedVerification && !isPhraseMatch && (
@@ -275,7 +278,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Back to Step 1</span>
@@ -285,7 +288,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -320,14 +323,14 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950 border border-rose-500/40 text-center space-y-2">
+            <div className="p-4 rounded-2xl liquid-glass-subtle border-rose-500/40 text-center space-y-2">
               <span className="text-[11px] uppercase font-bold tracking-wider text-rose-400 block">
                 Permanently Deleting:
               </span>
               <div className="text-2xl font-black font-mono text-white">
                 {count} Transactions
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 Clicking the button below will immediately wipe these records from your Firestore database.
               </p>
             </div>
@@ -338,7 +341,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={isDeleting}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Back</span>
@@ -349,7 +352,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
                   type="button"
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>

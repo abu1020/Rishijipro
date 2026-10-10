@@ -47,28 +47,31 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
         title="Click outside to cancel (Esc)"
       />
 
       {/* Dialog */}
-      <div className="relative bg-slate-900 border border-rose-500/40 rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full p-6 z-10 overflow-hidden my-auto max-h-[92vh]">
+      <div className="relative liquid-glass-elevated border-rose-500/30 rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full p-6 z-10 overflow-hidden my-auto max-h-[92vh]">
+        {/* Specular Highlight Rim */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-rose-400/40 to-transparent pointer-events-none" />
+
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/10">
+            <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div className="flex-1">
             <h3 className="text-base font-bold text-white tracking-tight">
               Delete Earning Record?
             </h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
               This action cannot be undone. This earning entry will be permanently removed from your ledger.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+            className="px-2.5 py-1.5 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
             title="Cancel (Esc)"
           >
             <span>Close</span>
@@ -77,21 +80,21 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         </div>
 
         {/* Item Preview Card */}
-        <div className="my-5 p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+        <div className="my-5 p-3.5 rounded-xl liquid-glass-subtle text-xs space-y-1.5">
           <div className="flex justify-between items-center text-slate-300">
-            <span className="text-slate-500">Date:</span>
+            <span className="text-slate-400">Date:</span>
             <span className="font-semibold text-white">{formatHumanDate(earning.date)}</span>
           </div>
           <div className="flex justify-between items-center text-slate-300">
-            <span className="text-slate-500">Client / Payer:</span>
+            <span className="text-slate-400">Client / Payer:</span>
             <span className="font-medium text-slate-200">{earning.clientName || 'General / Direct'}</span>
           </div>
           <div className="flex justify-between items-center text-slate-300">
-            <span className="text-slate-500">Category:</span>
+            <span className="text-slate-400">Category:</span>
             <span className="font-medium text-slate-200">{earning.category}</span>
           </div>
-          <div className="flex justify-between items-center pt-2 border-t border-slate-800/80">
-            <span className="text-slate-500 font-semibold">Net Earnings:</span>
+          <div className="flex justify-between items-center pt-2 border-t border-white/[0.08]">
+            <span className="text-slate-400 font-semibold">Net Earnings:</span>
             <span className="font-mono font-bold text-emerald-400 text-sm">
               {formatCurrency(earning.netAmount, currency)}
             </span>
@@ -104,7 +107,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl liquid-glass-button text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
           >
             Cancel
           </button>

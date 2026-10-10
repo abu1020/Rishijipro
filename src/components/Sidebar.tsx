@@ -11,13 +11,12 @@ import {
   Settings,
   Plus,
   HelpCircle,
-  Database,
   LogOut,
-  ChevronRight,
-  ShieldCheck,
-  Calendar,
   X,
+  Calculator,
+  Printer,
 } from 'lucide-react';
+import { hapticTap, hapticPress } from '../utils/haptics';
 
 interface SidebarProps {
   currentTab: DashboardTab;
@@ -29,6 +28,8 @@ interface SidebarProps {
   currentMonthNet: number;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
+  onOpenCalculator?: () => void;
+  onOpenMonthlySummary?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -41,6 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentMonthNet,
   isOpenMobile,
   onCloseMobile,
+  onOpenCalculator,
+  onOpenMonthlySummary,
 }) => {
   const { user, currency, logout } = useAuth();
 
@@ -62,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       tab: 'analytics' as DashboardTab,
-      label: 'Reports & Analytics',
+      label: 'Analytics',
       icon: <BarChart3 className="w-4 h-4" />,
       badge: null,
     },
@@ -85,60 +88,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop */}
       {isOpenMobile && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm lg:hidden"
-          onClick={onCloseMobile}
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm lg:hidden"
+          onClick={() => {
+            hapticTap();
+            onCloseMobile();
+          }}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-[var(--card-bg)] border-r border-blue-500/15 flex flex-col justify-between transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } text-slate-100`}
       >
         {/* Top: Brand & Workspace */}
-        <div className="p-4 border-b border-slate-800/60">
+        <div className="p-4 border-b border-blue-500/15">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 shadow-md shadow-emerald-500/20">
-                <TrendingUp className="w-5 h-5 stroke-[2.5]" />
+              {/* Crisp white brand monogram icon with blue stroke */}
+              <div className="w-7 h-7 rounded-lg bg-white text-blue-950 flex items-center justify-center font-bold shadow-sm">
+                <TrendingUp className="w-4 h-4 stroke-[2.5]" />
               </div>
-              <div>
-                <span className="text-base font-extrabold text-white tracking-tight block">
-                  rishi Jha
+              <div className="min-w-0">
+                <span className="text-sm font-bold text-white tracking-tight block truncate">
+                  ProfitTrack
                 </span>
-                <span className="text-[10px] text-emerald-400 font-medium block -mt-0.5 leading-tight">
-                  Professional GST and TDS Accountant
+                <span className="text-[10px] text-slate-400 font-medium block leading-tight truncate">
+                  GST & TDS Financial Suite
                 </span>
               </div>
             </div>
 
             {/* Mobile close button */}
             <button
-              onClick={onCloseMobile}
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white"
+              onClick={() => {
+                hapticTap();
+                onCloseMobile();
+              }}
+              className="lg:hidden p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-blue-950/60 transition-colors tactile-btn cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Quick Primary Action */}
+          {/* Quick Primary Action (Crisp White Element) */}
           <button
             onClick={() => {
+              hapticPress();
               onCloseMobile();
               onOpenNewEarningModal();
             }}
-            className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
+            className="w-full mt-3.5 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white hover:bg-blue-50 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-sm border border-white tactile-btn"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Record Daily Earning</span>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Record Earning</span>
           </button>
         </div>
 
         {/* Middle: Navigation Links */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Workspace
+          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Navigation
           </div>
 
           {navItems.map((item) => {
@@ -147,17 +158,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.tab}
                 onClick={() => {
+                  hapticTap();
                   onTabChange(item.tab);
                   onCloseMobile();
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all cursor-pointer tactile-btn ${
                   isActive
-                    ? 'bg-slate-800 text-white shadow-sm shadow-slate-950'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    ? 'bg-blue-600/20 text-white font-bold border border-blue-400/30 shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-blue-950/50'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className={isActive ? 'text-emerald-400' : 'text-slate-500'}>
+                  <span className={isActive ? 'text-blue-400' : 'text-slate-400'}>
                     {item.icon}
                   </span>
                   <span>{item.label}</span>
@@ -165,10 +177,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {item.badge !== null && (
                   <span
-                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${
                       isActive
-                        ? 'bg-slate-900 text-emerald-400'
-                        : 'bg-slate-900/60 text-slate-500'
+                        ? 'bg-blue-900/80 text-blue-200 border border-blue-400/30'
+                        : 'bg-blue-950/60 text-slate-400 border border-blue-500/10'
                     }`}
                   >
                     {item.badge}
@@ -179,82 +191,114 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
 
           {/* Secondary Shortcuts */}
-          <div className="pt-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Resources
+          <div className="pt-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Tools
           </div>
+
+          {onOpenMonthlySummary && (
+            <button
+              onClick={() => {
+                hapticPress();
+                onCloseMobile();
+                onOpenMonthlySummary();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-blue-950/50 transition-colors cursor-pointer tactile-btn"
+            >
+              <Printer className="w-4 h-4 text-blue-400" />
+              <span>Monthly PDF Statement</span>
+            </button>
+          )}
+
+          {onOpenCalculator && (
+            <button
+              onClick={() => {
+                hapticPress();
+                onCloseMobile();
+                onOpenCalculator();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-blue-950/50 transition-colors cursor-pointer tactile-btn"
+            >
+              <Calculator className="w-4 h-4 text-blue-400" />
+              <span>GST & TDS Calculator</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
+              hapticTap();
               onCloseMobile();
               onOpenTour();
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-blue-950/50 transition-colors cursor-pointer tactile-btn"
           >
-            <HelpCircle className="w-4 h-4 text-emerald-400" />
-            <span>Product Tour & Guide</span>
+            <HelpCircle className="w-4 h-4 text-blue-400" />
+            <span>Product Tour</span>
           </button>
         </div>
 
         {/* Bottom: Mini Goal Tracker & Account */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-3">
-          {/* Monthly Target Progress Capsule */}
+        <div className="p-3 border-t border-blue-500/15 bg-[var(--app-bg)] space-y-3">
+          {/* Monthly Target Progress */}
           <div
             onClick={() => {
+              hapticTap();
               onTabChange('goals');
               onCloseMobile();
             }}
-            className="p-3 rounded-xl bg-slate-900 border border-slate-800/80 hover:border-slate-700 transition-colors cursor-pointer"
+            className="p-2.5 rounded-lg bg-[var(--card-subtle)] border border-blue-500/20 hover:border-blue-400/40 transition-all cursor-pointer tactile-btn"
           >
             <div className="flex items-center justify-between text-[11px] mb-1.5">
-              <span className="text-slate-400 font-medium">Monthly Goal</span>
-              <span className="font-mono font-bold text-emerald-400">
+              <span className="text-slate-300 font-semibold">Monthly Goal</span>
+              <span className="font-mono text-xs font-bold text-white">
                 {progressPercent.toFixed(0)}%
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-blue-950 overflow-hidden">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1.5 font-mono">
-              <span>{formatCurrency(currentMonthNet, currency)}</span>
+            <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1.5 font-mono">
+              <span className="font-bold text-white">{formatCurrency(currentMonthNet, currency)}</span>
               <span>/ {formatCurrency(monthlyGoal, currency)}</span>
             </div>
           </div>
 
           {/* User Account Tile */}
-          <div className="flex items-center justify-between px-2 py-1">
+          <div className="flex items-center justify-between px-1 py-1">
             <div className="flex items-center gap-2 min-w-0">
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName || 'User'}
-                  className="w-7 h-7 rounded-full object-cover border border-slate-700"
+                  className="w-7 h-7 rounded-full object-cover border border-blue-400/30 shadow-xs"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30">
                   {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-200 truncate">
-                  {user?.displayName || 'Google Account'}
+                <div className="text-xs font-bold text-white truncate">
+                  {user?.displayName || 'Account'}
                 </div>
-                <div className="text-[10px] text-slate-500 truncate">
+                <div className="text-[10px] text-slate-400 truncate">
                   {user?.email}
                 </div>
               </div>
             </div>
 
             <button
-              onClick={() => logout()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 text-xs font-semibold transition-colors cursor-pointer shrink-0"
-              title="Sign Out of ProfitTrack"
+              onClick={() => {
+                hapticPress();
+                logout();
+              }}
+              className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-blue-950/60 transition-colors cursor-pointer shrink-0 tactile-btn"
+              title="Sign Out"
             >
-              <LogOut className="w-3.5 h-3.5 text-rose-400" />
-              <span>Sign Out</span>
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
